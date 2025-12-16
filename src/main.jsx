@@ -13,6 +13,8 @@ import './index.css';
 import ShopProfile from './pages/ShopPage';
 import Settings from './pages/Settings';
 import Support from './pages/Support';
+import Order from './pages/Order';
+import SubscribePage from './pages/RazorpaySubscriptionPage';
 
 const router = createBrowserRouter([
   {
@@ -25,7 +27,7 @@ const router = createBrowserRouter([
       { path: "login", element: <Login /> },
       { path: "settings", element: <Settings /> },
       { path: "support", element: <Support /> },
-
+      
       // DASHBOARD ROUTES
       {
         path: "dashboard",
@@ -34,7 +36,9 @@ const router = createBrowserRouter([
           { index: true, element: <DashboardHome /> }, // The Circle View
           { path: "upload", element: <UploadProduct /> },
           { path: "portfolio", element: <Portfolio /> },
-          { path: "shop", element: <ShopProfile /> }
+          { path: "order", element: <Order /> },
+          { path: "shop", element: <ShopProfile /> },
+          { path: "plan", element: <SubscribePage /> }
         ]
       }
     ]

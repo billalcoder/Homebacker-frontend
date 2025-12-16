@@ -36,7 +36,7 @@ const DashboardHeader = () => {
 
         {/* Profile Dropdown */}
         {isProfileOpen && (
-          <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-xl border border-stone-100 py-2 z-50 animate-fade-in-down">
+          <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-xl border border-stone-100 py-2 z-50 z-auto animate-fade-in-down">
             <div className="px-4 py-2 border-b border-stone-100 mb-1">
               <p className="text-sm font-bold text-stone-700">My Account</p>
             </div>

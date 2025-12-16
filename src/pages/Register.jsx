@@ -27,39 +27,49 @@ const Register = () => {
     };
 
     // Handle Form Submission
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setStatus({ loading: true, error: '', success: false });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus({ loading: true, error: '', success: false });
 
-        try {
-            // API Call
-            const response = await fetch(`${import.meta.env.VITE_BASEURL}/client/register`, { // Update port if needed
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
-            });
+    try {
+        // 1️⃣ Get user's live location
+        const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
 
-            const data = await response.json();
-            console.log(data);
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
 
-            if (!response.ok) {
-                throw new Error(data.message || data.details || data.error);
+        // 2️⃣ Add location to formData before sending
+        const finalData = {
+            ...formData,
+            location: {
+                type: "Point",
+                coordinates: [longitude, latitude]
             }
+        };
 
-            setStatus({ loading: false, error: '', success: true });
+        // 3️⃣ Send to backend
+        const response = await fetch(`${import.meta.env.VITE_BASEURL}/client/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(finalData),
+        });
 
-            // Optional: Redirect after 2 seconds
-            setTimeout(() => {
-                // navigate('/login'); // Uncomment this when you have a login page
-                console.log("Redirecting...");
-            }, 2000);
+        const data = await response.json();
+        console.log(data);
 
-        } catch (err) {
-            setStatus({ loading: false, error: err.message, success: false });
+        if (!response.ok) {
+            throw new Error(data.message || data.details || data.error);
         }
-    };
+
+        setStatus({ loading: false, error: '', success: true });
+
+    } catch (err) {
+        setStatus({ loading: false, error: err.message, success: false });
+    }
+};
+
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-stone-100 p-4">

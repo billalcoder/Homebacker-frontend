@@ -66,8 +66,8 @@ const Support = () => {
           <div className="mt-6 bg-amber-50 p-5 rounded-xl border border-amber-100">
             <h4 className="font-bold text-amber-800 mb-2">Need direct help?</h4>
             <div className="text-sm text-stone-600 space-y-1">
-              <p>📞 +1 (800) BAKER-HELP</p>
-              <p>✉️ support@bakerapp.com</p>
+              <p>📞 7420864014</p>
+              <p>✉️ billalshekhani10@gmail.com</p>
             </div>
           </div>
         </div>
@@ -96,7 +96,8 @@ const Support = () => {
               ></textarea>
             </div>
 
-            <Button text="Send Message" type="submit" />
+            <Button text="Send Message" type="submit" disabled={true}/>
+             <label className="block text-stone-600 text-sm font-semibold mb-2 mt-3 ">This feature will come soon you can direct connect with me or by my Number</label>
           </form>
         </div>
 

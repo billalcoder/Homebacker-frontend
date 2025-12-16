@@ -6,20 +6,15 @@ const Settings = () => {
     // State for Profile Form
     const [profile, setProfile] = useState({
         name: '',
-        email: "",
-        phone: ''
+        email: '',
+        phone: '',
+        password: ''
     });
     // State for Password Form
     const [security, setSecurity] = useState({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
-    });
-
-    // State for Toggles
-    const [notifications, setNotifications] = useState({
-        emailUpdates: true,
-        orderAlerts: true
     });
 
     async function handleApi() {
@@ -41,7 +36,33 @@ const Settings = () => {
             return alert("Problem sending to backend")
         }
         const data = await res.json()
-        console.log(data);
+        return data
+    }
+
+    async function handleUpdateApi() {
+        if (profile.password === '') {
+            console.log(profileData);
+            return alert("Password should not empty")
+        }
+        const profileData = {}
+        for (const key in profile) {
+            if (profile[key] !== "") {
+                profileData[key] = profile[key]
+            }
+        }
+
+        const res = await fetch(`${import.meta.env.VITE_BASEURL}/auth/updatepassword`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ profileData }),
+            credentials: "include"
+        });
+        if (!res.ok) {
+            return alert("Problem sending to backend")
+        }
+        const data = await res.json()
         return data
     }
 
@@ -148,44 +169,12 @@ const Settings = () => {
                         />
                     </div>
                     <div className="mt-2 text-right">
-                        <button className="border border-amber-600 text-amber-600 px-6 py-2 rounded-lg text-sm font-bold hover:bg-amber-50 transition-colors">
+                        <button className="border border-amber-600 text-amber-600 px-6 py-2 rounded-lg text-sm font-bold hover:bg-amber-50 transition-colors" onClick={handleUpdateApi}>
                             Update Password
                         </button>
                     </div>
                 </form>
             </div>
-
-            {/* 3. Notifications Card */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-stone-200">
-                <h3 className="text-lg font-bold text-amber-700 mb-4 border-b border-stone-100 pb-2">Preferences</h3>
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="font-semibold text-stone-700">Email Updates</p>
-                            <p className="text-xs text-stone-500">Receive weekly summaries of your shop performance.</p>
-                        </div>
-                        <input
-                            type="checkbox"
-                            checked={notifications.emailUpdates}
-                            onChange={() => setNotifications({ ...notifications, emailUpdates: !notifications.emailUpdates })}
-                            className="h-5 w-5 text-amber-600 rounded focus:ring-amber-500"
-                        />
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="font-semibold text-stone-700">Order Alerts</p>
-                            <p className="text-xs text-stone-500">Get notified immediately when a client places an order.</p>
-                        </div>
-                        <input
-                            type="checkbox"
-                            checked={notifications.orderAlerts}
-                            onChange={() => setNotifications({ ...notifications, orderAlerts: !notifications.orderAlerts })}
-                            className="h-5 w-5 text-amber-600 rounded focus:ring-amber-500"
-                        />
-                    </div>
-                </div>
-            </div>
-
         </div>
     );
 };

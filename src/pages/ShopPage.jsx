@@ -200,7 +200,7 @@ const ShopProfile = () => {
 // COMPONENT: ShopHeader
 // ==========================================
 const ShopHeader = ({ isEditMode, toggleEdit, onSave }) => (
-  <div className="bg-white/90 backdrop-blur-md border-b px-6 py-4 flex justify-between items-center sticky top-0 z-50 shadow-sm">
+  <div className="bg-white/90 backdrop-blur-md border-b px-6 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
     <h1 className="text-lg font-bold text-gray-800 flex items-center gap-2">
       <Store className="text-blue-600" />
       {isEditMode ? 'Editing Shop' : 'Shop Preview'}
