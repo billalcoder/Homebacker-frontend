@@ -13,7 +13,7 @@ const Orders = () => {
     try {
       setLoadingList(true);
       // Assuming you mapped 'getShopOrders' to this endpoint
-      const response = await fetch('http://localhost:4000/order/shop', {
+      const response = await fetch(`${import.meta.env.VITE_BASEURL}/order/shop`, {
         credentials: "include"
       });
       const result = await response.json();
