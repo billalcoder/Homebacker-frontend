@@ -40,23 +40,30 @@ const Settings = () => {
     }
 
     async function handleUpdateApi() {
-        if (profile.password === '') {
-            console.log(profileData);
+        if (security.currentPassword === '') {
+            console.log(security);
             return alert("Password should not empty")
+        }
+        if (security.newPassword === '') {
+
+            return alert("Password should not empty")
+        }
+        if (security.newPassword !== security.confirmPassword) {
+            return alert("new password does not match to the confirm password")
         }
         const profileData = {}
         for (const key in profile) {
-            if (profile[key] !== "") {
-                profileData[key] = profile[key]
+            if (security[key] !== "") {
+                profileData[key] = security[key]
             }
         }
 
-        const res = await fetch(`${import.meta.env.VITE_BASEURL}/auth/updatepassword`, {
+        const res = await fetch(`${import.meta.env.VITE_BASEURL}/client/updatepassword`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ profileData }),
+            body: JSON.stringify({ new: security.newPassword, old: security.currentPassword }),
             credentials: "include"
         });
         if (!res.ok) {

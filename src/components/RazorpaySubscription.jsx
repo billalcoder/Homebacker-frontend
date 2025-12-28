@@ -27,30 +27,10 @@ const RazorpaySubscription = ({ subscriptionId, user }) => {
       subscription_id: subscriptionId,           // <-- Subscription ID here
       name: "Home Baker",
       description: "Subscription Payment",
-      handler: async function (response) {
-        console.log("Payment Success:", response);
-
-        // send payment verification to backend
-        const verify = await fetch("http://localhost:4000/payment/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_subscription_id: response.razorpay_subscription_id,
-            razorpay_signature: response.razorpay_signature,
-          }),
-        });
-
-        const data = await verify.json();
-        console.log("Verify Response:", data);
-        alert("Subscription Activated!");
-      },
-
       prefill: {
         name: user?.name,
         email: user?.email,
       },
-
       theme: { color: "#3399cc" },
     };
 

@@ -42,7 +42,7 @@ const Login = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed. Check your credentials.');
+        throw new Error(data.error || 'Login failed. Check your credentials.');
       }
 
       // LOGIN SUCCESSFUL

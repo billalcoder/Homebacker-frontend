@@ -8,6 +8,13 @@ const Orders = () => {
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [loadingList, setLoadingList] = useState(true);
 
+
+  const nextStatusMap = {
+    pending: { label: "Accept Order", value: "preparing" },
+    preparing: { label: "Mark as On The Way", value: "on-the-way" },
+    "on-the-way": { label: "Mark as Delivered", value: "delivered" }
+  };
+
   // --- 1. FETCH ORDERS (Real Backend Data) ---
   const fetchOrders = async () => {
     try {
@@ -29,6 +36,27 @@ const Orders = () => {
       setLoadingList(false);
     }
   };
+
+  async function updateStatus(nextStatus) {
+    const res = await fetch(`${import.meta.env.VITE_BASEURL}/order/update`, {
+      method: "PUT",
+      body: JSON.stringify({
+        orderId: selectedOrder._id,
+        status: nextStatus
+      }),
+      headers: { "Content-Type": "application/json" },
+      credentials: "include"
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      fetchOrders(); // refresh list
+      closeModal()
+    } else {
+      console.log(data);
+    }
+  }
 
   useEffect(() => {
     fetchOrders();
@@ -69,11 +97,11 @@ const Orders = () => {
 
   return (
     <div className="p-6 pb-24 min-h-screen bg-stone-50 animate-fade-in">
-      
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-stone-700">Manage Orders</h2>
-        <button 
+        <button
           onClick={fetchOrders}
           className="p-2 text-stone-500 hover:text-amber-600 transition-colors"
           title="Refresh Orders"
@@ -90,11 +118,10 @@ const Orders = () => {
           <button
             key={status}
             onClick={() => setFilter(status)}
-            className={`px-4 py-2 rounded-full text-xs font-bold capitalize whitespace-nowrap transition-all ${
-              filter === status 
-                ? 'bg-amber-600 text-white shadow-md' 
-                : 'bg-white text-stone-500 border border-stone-200'
-            }`}
+            className={`px-4 py-2 rounded-full text-xs font-bold capitalize whitespace-nowrap transition-all ${filter === status
+              ? 'bg-amber-600 text-white shadow-md'
+              : 'bg-white text-stone-500 border border-stone-200'
+              }`}
           >
             {status.replace(/-/g, ' ')}
           </button>
@@ -105,14 +132,14 @@ const Orders = () => {
       <div className="space-y-1">
         {loadingList ? (
           <div className="text-center py-20 text-stone-400">
-             <p>Loading orders...</p>
+            <p>Loading orders...</p>
           </div>
         ) : filteredOrders.length > 0 ? (
           filteredOrders.map(order => (
-            <OrderCard 
-              key={order._id} 
-              order={order} 
-              onClick={handleOrderClick} 
+            <OrderCard
+              key={order._id}
+              order={order}
+              onClick={handleOrderClick}
             />
           ))
         ) : (
@@ -126,7 +153,7 @@ const Orders = () => {
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center backdrop-blur-sm p-0 sm:p-4">
           <div className="bg-white w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto animate-slide-up sm:animate-fade-in">
-            
+
             {/* Modal Header */}
             <div className="sticky top-0 bg-white p-5 border-b border-stone-100 flex justify-between items-center z-10">
               <div>
@@ -140,20 +167,20 @@ const Orders = () => {
 
             {/* Modal Body */}
             <div className="p-5 space-y-6">
-              
+
               {/* Status & Date */}
               <div className="flex justify-between items-center bg-stone-50 p-3 rounded-lg">
                 <div>
-                   <p className="text-xs text-stone-500">Ordered on</p>
-                   <p className="font-semibold text-sm text-stone-700">
-                     {new Date(selectedOrder.createdAt).toLocaleString()}
-                   </p>
+                  <p className="text-xs text-stone-500">Ordered on</p>
+                  <p className="font-semibold text-sm text-stone-700">
+                    {new Date(selectedOrder.createdAt).toLocaleString()}
+                  </p>
                 </div>
                 <div className="text-right">
-                   <p className="text-xs text-stone-500">Status</p>
-                   <span className="text-amber-600 font-bold uppercase text-sm">
-                     {selectedOrder.orderStatus}
-                   </span>
+                  <p className="text-xs text-stone-500">Status</p>
+                  <span className="text-amber-600 font-bold uppercase text-sm">
+                    {selectedOrder.orderStatus}
+                  </span>
                 </div>
               </div>
 
@@ -161,24 +188,24 @@ const Orders = () => {
               <div>
                 <h4 className="font-bold text-stone-700 mb-3 text-sm uppercase">Items</h4>
                 {loadingDetails ? (
-                   <div className="text-center py-4 text-stone-400">Loading details...</div>
+                  <div className="text-center py-4 text-stone-400">Loading details...</div>
                 ) : (
                   <div className="space-y-3">
                     {selectedOrder.items && selectedOrder.items.map((item, idx) => (
                       <div key={idx} className="flex justify-between items-center border-b border-stone-50 pb-2 last:border-0">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-stone-200 rounded-lg overflow-hidden flex-shrink-0">
-                             {/* Mock Image fallback since product might not have image populated in deep nesting */}
-                             <img 
-                               src={item.productId.images[0]} 
-                               alt="Product" 
-                               className="w-full h-full object-cover" 
-                             />
+                            {/* Mock Image fallback since product might not have image populated in deep nesting */}
+                            <img
+                              src={item?.productId?.images[0]}
+                              alt="Product"
+                              className="w-full h-full object-cover"
+                            />
                           </div>
                           <div>
                             {/* Check if productId is populated (object) or just an ID (string) */}
                             <p className="font-bold text-stone-700 text-sm">
-                              {typeof item.productId === 'object' && item.productId?.productName 
+                              {typeof item.productId === 'object' && item.productId?.productName
                                 ? item.productId.productName
                                 : "Product Name Loading..."}
                             </p>
@@ -210,15 +237,48 @@ const Orders = () => {
                 <span className="font-bold text-lg text-stone-800">Total Amount</span>
                 <span className="font-extrabold text-2xl text-amber-600">₹{selectedOrder.totalAmount}</span>
               </div>
-              
+
               {/* Action Buttons */}
-              <div className="flex gap-3 mt-4">
-                 <button className="flex-1 py-3 bg-stone-100 text-stone-600 font-bold rounded-xl hover:bg-stone-200 transition-colors">
-                   Reject
-                 </button>
-                 <button className="flex-1 py-3 bg-amber-600 text-white font-bold rounded-xl hover:bg-amber-700 shadow-lg shadow-amber-200 transition-colors">
-                   Accept Order
-                 </button>
+              <div className="flex gap-3 mt-6">
+
+                {/* Reject Button */}
+                {selectedOrder.orderStatus === "pending" && (
+                  <button
+                    onClick={() => updateStatus("cancelled")}
+                    className="
+        flex-1 py-3 rounded-xl
+        border border-red-200
+        text-red-600 font-semibold
+        bg-white
+        hover:bg-red-50
+        transition-all
+      "
+                  >
+                    Reject
+                  </button>
+                )}
+
+                {/* Primary Action Button */}
+                {nextStatusMap[selectedOrder.orderStatus] && (
+                  <button
+                    onClick={() => {
+                      updateStatus(nextStatusMap[selectedOrder.orderStatus].value)
+                    }
+                    }
+                    className="
+        flex-1 py-3 rounded-xl
+        bg-amber-600 text-white
+        font-bold
+        shadow-lg shadow-amber-200
+        hover:bg-amber-700
+        active:scale-[0.98]
+        transition-all
+      "
+                  >
+                    {nextStatusMap[selectedOrder.orderStatus].label}
+                  </button>
+                )}
+
               </div>
 
             </div>

@@ -4,16 +4,14 @@ const DashboardHome = () => {
   const [orderLength, setOrderLength] = useState(0)
 
   async function Setorder() {
-    const res = await fetch(`${import.meta.env.VITE_BASEURL}/order/shop`, { credentials: "include" })
+    const res = await fetch(`${import.meta.env.VITE_BASEURL}/order/length`, { credentials: "include" })
     const data = await res.json()
-    console.log(data.length);
     setOrderLength(data.length)
   }
   useEffect(() => {
     Setorder()
   }, [])
-  console.log(orderLength);
-  console.log(import.meta.env.VITE_BASEURL);
+
   return (
     <div className="flex-grow flex flex-col items-center justify-center p-6 animate-fade-in">
       <div className="relative group">
