@@ -25,9 +25,8 @@ const ProductItem = ({ product, onEdit, onDelete }) => {
             <span className="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full font-medium">
               {product.category}
             </span>
-            <span>Stock: <span className={product.stock < 5 ? 'text-red-500 font-bold' : 'text-stone-700'}>{product.stock}</span></span>
           </div>
-          <p className="text-amber-600 font-bold mt-1">${product.price}</p>
+          <p className="text-amber-600 font-bold mt-1">₹{product.price}</p>
         </div>
       </div>
 

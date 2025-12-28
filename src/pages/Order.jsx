@@ -70,7 +70,7 @@ const Orders = () => {
     try {
       // Calling your specific endpoint to get single order details
       // Ensure your route is mounted at /client/order/:id
-      const response = await fetch(`http://localhost:4000/order/get/${orderSummary._id}`, {
+      const response = await fetch(`${import.meta.env.VITE_BASEURL}/order/get/${orderSummary._id}`, {
         credentials: "include"
       });
       const result = await response.json();
@@ -219,8 +219,6 @@ const Orders = () => {
                 )}
               </div>
 
-              {/* Customer Info (From Populate) */}
-              {console.log(selectedOrder)}
               {!loadingDetails && selectedOrder.userId && (
                 <div className="border-t border-stone-100 pt-4">
                   <h4 className="font-bold text-stone-700 mb-2 text-sm uppercase">Customer</h4>

@@ -10,7 +10,7 @@ export default function SubscribePage() {
     try {
       setLoading(true);
       // Using port 4000 as per your snippet
-      const res = await fetch("http://localhost:4000/payment/create-subscription", {
+      const res = await fetch(`${import.meta.env.VITE_BASEURL}/payment/create-subscription`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

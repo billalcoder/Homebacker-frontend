@@ -14,7 +14,7 @@ const Register = lazy(() => import("./pages/Register"));
 const Login = lazy(() => import("./pages/Login"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Support = lazy(() => import("./pages/Support"));
-
+const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"))
 /* 🔥 Dashboard Layout + Pages */
 const DashboardLayout = lazy(() => import("./layout/DashboardLayout"));
 const DashboardHome = lazy(() => import("./pages/Dashboard"));
@@ -36,7 +36,7 @@ const router = createBrowserRouter([
       { path: "login", element: <Login /> },
       { path: "settings", element: <Settings /> },
       { path: "support", element: <Support /> },
-
+      { path: "terms", element: <TermsAndConditions /> },
       /* 🔥 DASHBOARD ROUTES */
       {
         path: "dashboard",

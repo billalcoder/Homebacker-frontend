@@ -9,7 +9,7 @@ const Register = () => {
 
     // Steps: 'register' -> 'otp'
     const [step, setStep] = useState('register');
-    
+
     // Form State
     const [formData, setFormData] = useState({
         name: '',
@@ -68,7 +68,7 @@ const Register = () => {
 
             // D. If Register Success -> Send OTP
             await sendOtpToUser();
-            
+
             // E. Switch UI to OTP Mode
             setStep('otp');
             setStatus({ loading: false, error: '', success: false }); // Reset status for next step
@@ -84,12 +84,12 @@ const Register = () => {
         const res = await fetch(`${import.meta.env.VITE_BASEURL}/client/sendOtp`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 email: formData.email,
-                phone: formData.phone 
+                phone: formData.phone
             }),
         });
-        
+
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Failed to send OTP");
     };
@@ -103,9 +103,9 @@ const Register = () => {
             const res = await fetch(`${import.meta.env.VITE_BASEURL}/client/varifyOtp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    email: formData.email, 
-                    otp: formData.otp 
+                body: JSON.stringify({
+                    email: formData.email,
+                    otp: formData.otp
                 }),
             });
 
@@ -117,7 +117,7 @@ const Register = () => {
 
             // Success!
             setStatus({ loading: false, error: '', success: true });
-            
+
             setTimeout(() => {
                 navigate('/login');
             }, 2000);
@@ -204,8 +204,15 @@ const Register = () => {
                                     className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded cursor-pointer"
                                 />
                                 <label htmlFor="terms" className="ml-2 block text-sm text-stone-600">
-                                    I agree to the <a href="#" className="text-amber-600 hover:underline">Terms of Service</a>
+                                    I agree to the{" "}
+                                    <Link
+                                        to="/terms"
+                                        className="text-amber-600 hover:underline font-medium"
+                                    >
+                                        Terms of Service
+                                    </Link>
                                 </label>
+
                             </div>
 
                             <Button
@@ -243,8 +250,8 @@ const Register = () => {
                             />
 
                             <div className="mt-4 text-center">
-                                <button 
-                                    type="button" 
+                                <button
+                                    type="button"
                                     onClick={() => sendOtpToUser().then(() => alert("OTP Resent!"))}
                                     className="text-sm text-stone-400 hover:text-amber-600 underline"
                                 >

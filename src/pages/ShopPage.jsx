@@ -361,11 +361,7 @@ const ShopDetails = ({ isEditMode, data, onChange }) => (
                 name="shopCategory" value={data.shopCategory} onChange={onChange}
                 className="w-full mt-1 p-3 border border-gray-200 rounded-lg text-gray-700 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition-all"
               >
-                <option value="General">General</option>
-                <option value="Bakery">Bakery</option>
-                <option value="Clothing">Clothing</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Services">Services</option>
+                <option value="Bakery">Bakery</option> 
                 <option value="Food">Food & Beverage</option>
               </select>
             </div>
