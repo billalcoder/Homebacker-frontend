@@ -9,7 +9,8 @@ const FormInput = ({
   onChange,
   placeholder,
   required = false,
-  disabled = false
+  disabled = false,
+  text
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -52,6 +53,8 @@ const FormInput = ({
           {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
       )}
+
+     <p className='block text-stone-600 text-sm font-semibold mb-2'>{text}</p>
     </div>
   );
 };

@@ -63,7 +63,7 @@ const Register = () => {
             const registerData = await registerRes.json();
 
             if (!registerRes.ok) {
-                throw new Error(registerData.message || registerData.error || "Registration failed");
+                throw new Error(registerData.message || registerData.details || registerData.error || "Registration failed");
             }
 
             // D. If Register Success -> Send OTP
@@ -112,7 +112,7 @@ const Register = () => {
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.message || data.error || "Invalid OTP");
+                throw new Error(data.message || data.details || data.error || "Invalid OTP");
             }
 
             // Success!
@@ -180,16 +180,17 @@ const Register = () => {
                                 name="phone"
                                 value={formData.phone}
                                 onChange={handleChange}
-                                placeholder="+1 234 567 8900"
+                                placeholder="7493824393"
                                 required
                             />
                             <FormInput
                                 label="Password"
+                                text={"Password must include uppercase, lowercase, number, and special character"}
                                 type="password"
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
-                                placeholder="••••••••"
+                                placeholder="******"
                                 required
                             />
 
