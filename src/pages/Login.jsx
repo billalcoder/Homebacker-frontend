@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import FormInput from '../components/FormInput';
 import Button from '../components/Button';
 
 const Login = () => {
   const navigate = useNavigate();
-  
+
   // State for login credentials
   const [credentials, setCredentials] = useState({
     email: '',
@@ -23,6 +23,29 @@ const Login = () => {
     });
   };
 
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_BASEURL}/client/getshop`,
+          {
+            method: "GET",
+            credentials: "include"
+          }
+        );
+
+        if (res.ok) {
+          navigate("/dashboard");
+        }
+      } catch (err) {
+        // stay on login page
+      }
+    };
+
+    checkSession();
+  }, []);
+
+
   // Handle Form Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,7 +59,7 @@ const Login = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(credentials),
-        credentials : "include"
+        credentials: "include"
       });
 
       const data = await response.json();
@@ -54,8 +77,8 @@ const Login = () => {
 
       // Redirect to dashboard after a short delay for user feedback
       setTimeout(() => {
-         navigate('/dashboard'); // We haven't built this page yet
-         console.log("Redirecting to dashboard...");
+        navigate('/dashboard'); // We haven't built this page yet
+        console.log("Redirecting to dashboard...");
       }, 1000);
 
     } catch (err) {
@@ -67,7 +90,7 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-stone-100 p-4">
       {/* Container: Responsive (Full width mobile, max-w-md desktop) */}
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-stone-200">
-        
+
         {/* Header / Brand Area - Keeping consistency with Register page */}
         <div className="bg-amber-600 p-8 text-center">
           <h2 className="text-3xl font-bold text-white tracking-wide">Welcome Back</h2>
@@ -76,7 +99,7 @@ const Login = () => {
 
         {/* Form Area */}
         <div className="p-8">
-          
+
           {/* Error / Success Messages */}
           {status.error && (
             <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded border border-red-200">
@@ -90,37 +113,37 @@ const Login = () => {
           )}
 
           <form onSubmit={handleSubmit}>
-            <FormInput 
-              label="Email Address" 
-              type="email" 
-              name="email" 
-              value={credentials.email} 
-              onChange={handleChange} 
+            <FormInput
+              label="Email Address"
+              type="email"
+              name="email"
+              value={credentials.email}
+              onChange={handleChange}
               placeholder="john@example.com"
               required
             />
 
-            <FormInput 
-              label="Password" 
-              type="password" 
-              name="password" 
-              value={credentials.password} 
-              onChange={handleChange} 
-              placeholder="••••••••" 
-              required 
+            <FormInput
+              label="Password"
+              type="password"
+              name="password"
+              value={credentials.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+              required
             />
 
             {/* Forgot Password Link */}
             <div className="flex justify-end mb-6">
-               <Link to="/forgot-password" className="text-sm text-amber-600 hover:underline">
-                 Forgot Password?
-               </Link>
+              <Link to="/forgot-password" className="text-sm text-amber-600 hover:underline">
+                Forgot Password?
+              </Link>
             </div>
 
-            <Button 
-              text="Sign In" 
-              type="submit" 
-              disabled={status.loading} 
+            <Button
+              text="Sign In"
+              type="submit"
+              disabled={status.loading}
             />
           </form>
 
