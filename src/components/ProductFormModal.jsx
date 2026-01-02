@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import Button from './Button'; // Reusing your existing button
 import FormInput from './FormInput'; // Reusing your input
 
+import Cropper from "react-easy-crop";
+import { getCroppedImage } from "../utils/cropImage";
+import ImageCropper from './ImageCropper';
+
 const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
   const [formData, setFormData] = useState({
     productName: "",
@@ -14,6 +18,11 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
 
   const [imageFile, setImageFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
+
+
+  const [imageSrc, setImageSrc] = useState(null);
+  const [showCropper, setShowCropper] = useState(false);
+
 
   // Reset or Pre-fill form when modal opens
   useEffect(() => {
@@ -44,28 +53,41 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
     }
   }, [initialData, isOpen]);
 
- const handleChange = (e) => {
-  const { name, value } = e.target;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
 
-  setFormData((prev) => {
-    let updated = { ...prev, [name]: value };
+    setFormData((prev) => {
+      let updated = { ...prev, [name]: value };
 
-    // Only auto-change when user selects unitType
-    if (name === "unitType") {
-      updated.unitValue = value === "kg" ? "250" : "1"; 
-    }
+      // Only auto-change when user selects unitType
+      if (name === "unitType") {
+        updated.unitValue = value === "kg" ? "250" : "1";
+      }
 
-    return updated;
-  });
-};
+      return updated;
+    });
+  };
+
+  // const handleFileChange = (e) => {
+  //   const file = e.target.files[0];
+  //   if (file) {
+  //     setImageFile(file);
+  //     setPreviewUrl(URL.createObjectURL(file));
+  //   }
+  // };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-    }
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageSrc(reader.result);
+      setShowCropper(true);
+    };
+    reader.readAsDataURL(file);
   };
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -83,6 +105,16 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
     }
 
     onSubmit(data);
+  };
+
+  const handleCropDone = async (croppedPixels) => {
+    const croppedFile = await getCroppedImage(imageSrc, croppedPixels);
+
+    setImageFile(croppedFile);
+    setPreviewUrl(URL.createObjectURL(croppedFile));
+
+    setShowCropper(false);
+    setImageSrc(null);
   };
 
   if (!isOpen) return null;
@@ -188,6 +220,17 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
           </form>
         </div>
       </div>
+      {showCropper && (
+        <ImageCropper
+          imageSrc={imageSrc}
+          aspect={1}
+          onCancel={() => {
+            setShowCropper(false);
+            setImageSrc(null);
+          }}
+          onDone={handleCropDone}
+        />
+      )}
     </div>
   );
 };

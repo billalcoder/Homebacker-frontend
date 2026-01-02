@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import FormInput from '../components/FormInput';
 import Button from '../components/Button';
+import { logToServer } from '../utils/logs';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -71,7 +72,7 @@ const Login = () => {
       // LOGIN SUCCESSFUL
       setStatus({ loading: false, error: '', success: true });
       console.log("Login successful, token:", data.token); // Assuming your backend sends a token
-      
+
       // TODO: Store token in localStorage here if needed.
       // localStorage.setItem('token', data.token);
 
@@ -82,6 +83,7 @@ const Login = () => {
       }, 1000);
 
     } catch (err) {
+      logToServer("login error", { err })
       setStatus({ loading: false, error: err.message, success: false });
     }
   };

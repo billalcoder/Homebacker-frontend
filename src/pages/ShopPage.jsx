@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, MapPin, Instagram, Globe, Phone, Plus, Trash2, Save, X, Loader2, Store, LayoutGrid, ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
-
+import ImageCropper from "../components/ImageCropper";
+import { getCroppedImage } from "../utils/cropImage";
+import FormInput from '../components/FormInput';
+import { logToServer } from '../utils/logs';
 // ==========================================
 // PARENT COMPONENT: ShopProfile
 // ==========================================
 const ShopProfile = () => {
   const [loading, setLoading] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState(null);
+  const [cropTarget, setCropTarget] = useState(null);
+  const [showCropper, setShowCropper] = useState(false);
 
   // --- Main Data State ---
   const [shopData, setShopData] = useState({
@@ -25,7 +31,7 @@ const ShopProfile = () => {
   // --- Upload State ---
   const [selectedProfileImg, setSelectedProfileImg] = useState(null);
   const [selectedCoverImg, setSelectedCoverImg] = useState(null);
-
+  const [isSaving, setIsSaving] = useState(false);
   // --- Previews ---
   const [previewProfile, setPreviewProfile] = useState('');
   const [previewCover, setPreviewCover] = useState('');
@@ -55,6 +61,16 @@ const ShopProfile = () => {
     }
   };
 
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      await saveShopProfile(); // your API / save logic
+      setIsEditMode(false);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // --- 2. Input Handlers ---
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -70,19 +86,70 @@ const ShopProfile = () => {
   };
 
   // --- 3. Image Handlers ---
+  // const handleImageSelect = (e, type) => {
+  //   const file = e.target.files[0];
+  //   if (!file) return;
+
+  //   const objectUrl = URL.createObjectURL(file);
+  //   if (type === 'profile') {
+  //     setSelectedProfileImg(file);
+  //     setPreviewProfile(objectUrl);
+  //   } else if (type === 'cover') {
+  //     setSelectedCoverImg(file);
+  //     setPreviewCover(objectUrl);
+  //   }
+  // };
+
   const handleImageSelect = (e, type) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const objectUrl = URL.createObjectURL(file);
-    if (type === 'profile') {
-      setSelectedProfileImg(file);
-      setPreviewProfile(objectUrl);
-    } else if (type === 'cover') {
-      setSelectedCoverImg(file);
-      setPreviewCover(objectUrl);
-    }
+    const imageUrl = URL.createObjectURL(file);
+
+    setCropImageSrc(imageUrl);
+    setCropTarget(type); // "profile" or "cover"
+    setShowCropper(true);
   };
+
+  // const handleCropDone = async (croppedPixels) => {
+  //   const croppedFile = await getCroppedImage(cropImageSrc, croppedPixels);
+  //   const preview = URL.createObjectURL(croppedFile);
+
+  //   if (cropTarget === "profile") {
+  //     setSelectedProfileImg(croppedFile);
+  //     setPreviewProfile(preview);
+  //   }
+
+  //   if (cropTarget === "cover") {
+  //     setSelectedCoverImg(croppedFile);
+  //     setPreviewCover(preview);
+  //   }
+
+  //   setShowCropper(false);
+  //   setCropImageSrc(null);
+  //   setCropTarget(null);
+  // };
+
+  const handleCropDone = async (croppedPixels) => {
+    const croppedFile = await getCroppedImage(cropImageSrc, croppedPixels);
+    const preview = URL.createObjectURL(croppedFile);
+
+    if (cropTarget === "profile") {
+      setSelectedProfileImg(croppedFile);
+      setPreviewProfile(preview);
+    }
+
+    if (cropTarget === "cover") {
+      setSelectedCoverImg(croppedFile);
+      setPreviewCover(preview);
+    }
+
+    setShowCropper(false);
+    setCropImageSrc(null);
+    setCropTarget(null);
+  };
+
+
 
   // --- 4. Save / Submit ---
   const saveShopProfile = async () => {
@@ -120,6 +187,7 @@ const ShopProfile = () => {
       }
     } catch (error) {
       console.error("Update failed", error);
+      logToServer("save btn click", { error })
       alert("Failed to update profile");
     } finally {
       setLoading(false);
@@ -131,7 +199,7 @@ const ShopProfile = () => {
     try {
       const response = await fetch(`${API_BASE}/portfolio`, {
         method: 'POST',
-   credentials: "include",
+        credentials: "include",
         body: formData
       });
       const result = await response.json();
@@ -147,7 +215,7 @@ const ShopProfile = () => {
     try {
       const response = await fetch(`${API_BASE}/portfolio/${itemId}`, {
         method: 'DELETE',
-       credentials: "include"
+        credentials: "include"
       });
       if (response.ok) {
         setShopData(prev => ({
@@ -164,7 +232,7 @@ const ShopProfile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 font-sans text-gray-800">
-      <ShopHeader isEditMode={isEditMode} toggleEdit={() => setIsEditMode(!isEditMode)} onSave={saveShopProfile} />
+      <ShopHeader isEditMode={isEditMode} toggleEdit={() => setIsEditMode(!isEditMode)} onSave={handleSave} isSaving={isSaving} />
 
       <div className="max-w-5xl mx-auto bg-white shadow-2xl min-h-screen">
 
@@ -192,6 +260,19 @@ const ShopProfile = () => {
           />
         </div>
       </div>
+      {showCropper && (
+        <ImageCropper
+          imageSrc={cropImageSrc}
+          aspect={cropTarget === "cover" ? 16 / 9 : 1}
+          onDone={handleCropDone}
+          onCancel={() => {
+            setShowCropper(false);
+            setCropImageSrc(null);
+            setCropTarget(null);
+          }}
+        />
+      )}
+
     </div>
   );
 };
@@ -199,37 +280,78 @@ const ShopProfile = () => {
 // ==========================================
 // COMPONENT: ShopHeader
 // ==========================================
-const ShopHeader = ({ isEditMode, toggleEdit, onSave }) => (
-  <div className="bg-white/90 backdrop-blur-md border-b px-6 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
-    <h1 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+const ShopHeader = ({ isEditMode, toggleEdit, onSave, isSaving }) => (
+  <div className="bg-white/90 backdrop-blur-md border-b px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+    {console.log(isSaving)}
+    {/* Title */}
+    <h1 className="text-base sm:text-lg font-bold text-gray-800 flex items-center gap-2">
       <Store className="text-blue-600" />
-      {isEditMode ? 'Editing Shop' : 'Shop Preview'}
+      <span className="hidden sm:inline">
+        {isEditMode ? 'Editing Shop' : 'Shop Preview'}
+      </span>
     </h1>
-    <div className="flex items-center gap-3">
+
+    {/* Actions */}
+    <div className="flex items-center gap-2 sm:gap-3">
+
+      {/* Edit / Cancel */}
       <button
         onClick={toggleEdit}
-        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${isEditMode ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+        disabled={isSaving}
+        className={`p-2 sm:px-4 sm:py-2 rounded-full text-sm font-medium transition-all
+          ${isEditMode
+            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }
+          ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}
+        `}
       >
-        {isEditMode ? 'Cancel Edit' : 'Edit Profile'}
+        <span className="sm:hidden">
+          {isEditMode ? <X size={18} /> : <LayoutGrid size={18} />}
+        </span>
+        <span className="hidden sm:inline">
+          {isEditMode ? 'Cancel Edit' : 'Edit Profile'}
+        </span>
       </button>
+
+      {/* Save Button */}
+
       {isEditMode && (
         <button
           onClick={onSave}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full text-sm font-medium flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
+          disabled={isSaving}
+          className={`bg-blue-600 text-white p-2 sm:px-6 sm:py-2 rounded-full text-sm font-medium
+            flex items-center gap-2 shadow-md transition-all
+            ${isSaving
+              ? 'opacity-70 cursor-not-allowed'
+              : 'hover:bg-blue-700 hover:shadow-lg'
+            }
+          `}
         >
-          <Save size={16} /> Save Changes
+          {/* Loader */}
+          {isSaving ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <Save size={16} />
+          )}
+
+          <span className="hidden sm:inline">
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </span>
         </button>
       )}
     </div>
   </div>
 );
 
+
+
 // ==========================================
 // COMPONENT: ShopHero (With Slider)
 // ==========================================
 const ShopHero = ({ isEditMode, coverPreview, profilePreview, onImageSelect, portfolioItems }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
-
+  console.log(portfolioItems);
   // Auto-slide effect for Preview Mode
   useEffect(() => {
     if (isEditMode || portfolioItems.length === 0) return;
@@ -241,7 +363,6 @@ const ShopHero = ({ isEditMode, coverPreview, profilePreview, onImageSelect, por
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % portfolioItems.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev === 0 ? portfolioItems.length - 1 : prev - 1));
-
   // EDIT MODE: Static Cover Image
   if (isEditMode) {
     return (
@@ -278,8 +399,9 @@ const ShopHero = ({ isEditMode, coverPreview, profilePreview, onImageSelect, por
             key={item._id}
             className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100' : 'opacity-0'}`}
           >
+            {console.log(item)}
             {/* Background Image with Gradient */}
-            <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover opacity-60" />
+            <img src={item.images} alt={item.title} className="w-full h-full object-cover opacity-60" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
             {/* Content Overlay */}
@@ -361,7 +483,7 @@ const ShopDetails = ({ isEditMode, data, onChange }) => (
                 name="shopCategory" value={data.shopCategory} onChange={onChange}
                 className="w-full mt-1 p-3 border border-gray-200 rounded-lg text-gray-700 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition-all"
               >
-                <option value="Bakery">Bakery</option> 
+                <option value="Bakery">Bakery</option>
                 <option value="Food">Food & Beverage</option>
               </select>
             </div>
@@ -442,8 +564,18 @@ const ShopDetails = ({ isEditMode, data, onChange }) => (
 // ==========================================
 const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
   const [isAdding, setIsAdding] = useState(false);
-  const [newItem, setNewItem] = useState({ title: '', price: '', image: null });
+  const [newItem, setNewItem] = useState({ title: '', price: '', image: null, category: "Cake", unitType: "kg", unitValue: "250" });
   const [loading, setLoading] = useState(false);
+  const [cropSrc, setCropSrc] = useState(null);
+  const [showCropper, setShowCropper] = useState(false);
+
+  useEffect(() => {
+    if (newItem.unitType === "kg") {
+      setNewItem(prev => ({ ...prev, unitValue: "250" }));
+    } else {
+      setNewItem(prev => ({ ...prev, unitValue: "1" }));
+    }
+  }, [newItem.unitType]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -455,29 +587,56 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
     // 1. Append Text Fields FIRST (Critical for Multer/Backend parsing)
     formData.append('title', newItem.title);
     formData.append('price', newItem.price);
+    formData.append('category', newItem.category);
+    formData.append('unitType', newItem.unitType);
+    formData.append('unitValue', newItem.unitValue);
 
     // 2. Append File LAST
     // Ensure this key matches your backend: upload.single('portfolioImages') vs 'image'
     // You mentioned your backend route uses 'portfolioImages'
-    formData.append('portfolioImages', newItem.image); 
+    formData.append('portfolioImages', newItem.image);
+
 
     // Debug: Check console to see what is being sent
     console.log("Submitting Portfolio Item:", {
-        title: newItem.title, 
-        price: newItem.price, 
-        image: newItem.image.name
+      title: newItem.title,
+      price: newItem.price,
+      image: newItem.image.name,
+      category: newItem.category,
+      unitType: newItem.unitType,
+      unitValue: newItem.unitValue
     });
 
     const success = await onAdd(formData);
-    
+    const DEFAULT_ITEM = {
+      title: '',
+      price: '',
+      image: null,
+      category: "Cake",
+      unitType: "kg",
+      unitValue: "250"
+    };
+
     setLoading(false);
     if (success) {
       setIsAdding(false);
-      setNewItem({ title: '', price: '', image: null });
+      setNewItem(DEFAULT_ITEM);
     } else {
       alert("Failed to add item. Check console.");
     }
   };
+
+  const handleCropDone = async (pixels) => {
+    const croppedFile = await getCroppedImage(cropSrc, pixels);
+    setNewItem(prev => ({ ...prev, image: croppedFile }));
+    setShowCropper(false);
+    setCropSrc(null);
+  };
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setCropSrc(null);
+  };
+
 
   return (
     <div className="mt-12 border-t border-gray-100 pt-10 pb-20">
@@ -486,7 +645,8 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
           <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <ShoppingBag className="text-blue-600" /> Portfolio & Products
           </h2>
-          <p className="text-gray-500 text-sm mt-1">Manage your selling items</p>
+          <p className="text-gray-500 text-sm mt-1">Upload your selling items</p>
+          <p className="text-gray-500 text-sm mt-1">“You can add a maximum of 7 best products here. Please use the upload section to add other remaining products.”</p>
         </div>
         {isEditMode && (
           <button
@@ -506,7 +666,7 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
             <button onClick={() => setIsAdding(false)} className="p-1 hover:bg-gray-100 rounded-full"><X size={20} className="text-gray-400 hover:text-red-500" /></button>
           </div>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
+
             {/* Image Input */}
             <div className="bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center h-40 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors relative group">
               {newItem.image ? (
@@ -517,7 +677,14 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
                   <span className="text-xs font-bold">Upload Image</span>
                 </div>
               )}
-              <input type="file" required onChange={e => setNewItem({ ...newItem, image: e.target.files[0] })} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
+              <input type="file" required onChange={(e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                setCropSrc(URL.createObjectURL(file));
+                setShowCropper(true);
+              }}
+                className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
             </div>
 
             {/* Text Inputs */}
@@ -530,20 +697,86 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
                   value={newItem.title} onChange={e => setNewItem({ ...newItem, title: e.target.value })}
                 />
               </div>
+              <div className="mb-4">
+                <label className="block text-stone-600 text-sm font-semibold mb-2">Select Unit Type</label>
+                <select
+                  name="unitType"
+                  value={newItem.unitType}
+                  onChange={e => setNewItem({ ...newItem, unitType: e.target.value })}
+                  className="w-full px-4 py-3 rounded-lg border border-stone-300 bg-stone-50 focus:ring-2 focus:ring-amber-500"
+                >
+                  <option value="kg">Kilogram (grams)</option>
+                  <option value="quantity">Quantity</option>
+                </select>
+              </div>
+              {newItem.unitType === "kg" ? (
+                <div>
+                  <label className="block text-stone-600 text-sm font-semibold mb-2">
+                    Weight (grams)
+                  </label>
+                  <select
+                    value={newItem.unitValue}
+                    onChange={e =>
+                      setNewItem({ ...newItem, unitValue: e.target.value })
+                    }
+                    className="w-full px-4 py-3 rounded-lg border border-stone-300 bg-stone-50"
+                  >
+                    <option value="250">250 g</option>
+                    <option value="500">500 g</option>
+                    <option value="750">750 g</option>
+                    <option value="1000">1 kg</option>
+                    <option value="1500">1.5 kg</option>
+                    <option value="2000">2 kg</option>
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-stone-600 text-sm font-semibold mb-2">
+                    Quantity
+                  </label>
+                  <select
+                    value={newItem.unitValue}
+                    onChange={e =>
+                      setNewItem({ ...newItem, unitValue: e.target.value })
+                    }
+                    className="w-full px-4 py-3 rounded-lg border border-stone-300 bg-stone-50"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, , 9, 10, 11, 12].map(q => (
+                      <option key={q} value={q}>
+                        {q}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="mb-4">
+                <label className="block text-stone-600 text-sm font-semibold mb-2">Category</label>
+                <select
+                  name="category"
+                  value={newItem.category}
+                  onChange={e => setNewItem({ ...newItem, category: e.target.value })}
+                  className="w-full p-3 rounded-lg border bg-stone-50"
+                >
+                  {["Cake", "Pastry", "Cookies", "Bread", "Brownie", "Donuts", "Chocolates", "Snacks", "Others"].map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Price (₹)</label>
                 <input
-                  type="text" 
-                  placeholder="0.00" 
+                  type="text"
+                  placeholder="0.00"
                   required
                   min="1" // Ensure positive number
                   className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-blue-500 transition-colors"
-                  value={newItem.price} 
+                  value={newItem.price}
                   onChange={e => setNewItem({ ...newItem, price: e.target.value })}
                 />
               </div>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={loading}
                 className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-md disabled:bg-blue-400"
               >
@@ -565,16 +798,16 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {items.map((item) => (
             <div key={item._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all group relative duration-300">
+              {console.log(item)}
               <div className="h-48 bg-gray-100 relative overflow-hidden">
-                <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img src={item.images} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <div className="p-4">
-                <h3 className="font-bold text-gray-800 truncate text-lg">{item.title}</h3>
+                <h3 className="font-bold text-gray-800 truncate text-lg">{item.productName}</h3>
                 {/* Ensure we render price, defaulting to 0 if undefined */}
                 <p className="text-blue-600 font-bold mt-1">₹{item.price || "0"}</p>
               </div>
-              {console.log(typeof(item.price))}
 
               {isEditMode && (
                 <button
@@ -589,6 +822,15 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
           ))}
         </div>
       )}
+      {showCropper && (
+        <ImageCropper
+          imageSrc={cropSrc}
+          aspect={1}
+          onDone={handleCropDone}
+          onCancel={handleCropCancel}
+        />
+      )}
+
     </div>
   );
 };

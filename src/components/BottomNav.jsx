@@ -11,7 +11,7 @@ const BottomNav = () => {
     `p-1 rounded-lg ${isActive ? 'bg-amber-50' : ''}`;
 
   return (
-    <nav className="fixed bottom-0 w-full bg-white border-t border-stone-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40 pb-safe">
+    <nav className="fixed bottom-0 z-10 w-full bg-white border-t border-stone-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] pb-safe">
       <div className="flex justify-around items-center h-20 px-2">
 
         {/* 1. Home (Dashboard Main) */}
