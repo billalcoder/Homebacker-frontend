@@ -4,6 +4,9 @@ import ImageCropper from "../components/ImageCropper";
 import { getCroppedImage } from "../utils/cropImage";
 import FormInput from '../components/FormInput';
 import { logToServer } from '../utils/logs';
+import useApi from "../hooks/useApi";
+
+
 // ==========================================
 // PARENT COMPONENT: ShopProfile
 // ==========================================
@@ -13,6 +16,10 @@ const ShopProfile = () => {
   const [cropImageSrc, setCropImageSrc] = useState(null);
   const [cropTarget, setCropTarget] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
+
+
+  const shopApi = useApi();
+  const portfolioApi = useApi();
 
   // --- Main Data State ---
   const [shopData, setShopData] = useState({
@@ -44,34 +51,47 @@ const ShopProfile = () => {
   }, []);
 
 
+  // const fetchShopData = async () => {
+  //   try {
+  //     const response = await fetch(`${API_BASE}/getshop`, {
+  //       credentials: "include"
+  //     });
+  //     const data = await response.json();
+  //     if (data) {
+  //       setShopData(data);
+  //       setPreviewProfile(data.profileImage);
+  //       setPreviewCover(data.coverImage);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching shop:", error);
+  //     fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         message: error.message,
+  //         stack: error.stack,
+  //         api: "/getshop",
+  //         route: window.location.pathname,
+  //         source: "shop",
+  //         userAgent: navigator.userAgent,
+  //       }),
+  //     });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchShopData = async () => {
-    try {
-      const response = await fetch(`${API_BASE}/getshop`, {
-        credentials: "include"
-      });
-      const data = await response.json();
-      if (data) {
-        setShopData(data);
-        setPreviewProfile(data.profileImage);
-        setPreviewCover(data.coverImage);
-      }
-    } catch (error) {
-      console.error("Error fetching shop:", error);
-      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: error.message,
-          stack: error.stack,
-          api: "/getshop",
-          route: window.location.pathname,
-          source: "shop",
-          userAgent: navigator.userAgent,
-        }),
-      });
-    } finally {
-      setLoading(false);
-    }
+    const data = await shopApi.request({
+      url: `${API_BASE}/getshop`,
+      retry: 1
+    });
+
+    if (!data) return;
+
+    setShopData(data);
+    setPreviewProfile(data.profileImage);
+    setPreviewCover(data.coverImage);
   };
 
   const handleSave = async () => {
@@ -166,41 +186,64 @@ const ShopProfile = () => {
 
   // --- 4. Save / Submit ---
   const saveShopProfile = async () => {
-    setLoading(true);
+    // 🔒 prevent duplicate clicks / race condition
+    if (shopApi.loading) return;
+
     const formData = new FormData();
 
-    // Text Data
+    // ===============================
+    // Text fields
+    // ===============================
     Object.keys(shopData).forEach(key => {
-      if (key === 'socialLinks') {
-        formData.append('instagram', shopData.socialLinks.instagram);
-        formData.append('whatsapp', shopData.socialLinks.whatsapp);
-        formData.append('website', shopData.socialLinks.website);
-      } else if (key !== 'portfolio' && key !== 'shopGallery' && key !== '_id' && key !== 'createdAt' && key !== 'updatedAt') {
-        formData.append(key, shopData[key]);
+      if (key === "socialLinks") {
+        formData.append("instagram", shopData.socialLinks?.instagram || "");
+        formData.append("whatsapp", shopData.socialLinks?.whatsapp || "");
+        formData.append("website", shopData.socialLinks?.website || "");
+      }
+      else if (
+        key !== "portfolio" &&
+        key !== "shopGallery" &&
+        key !== "_id" &&
+        key !== "createdAt" &&
+        key !== "updatedAt"
+      ) {
+        formData.append(key, shopData[key] ?? "");
       }
     });
 
-    // Single Images
-    if (selectedProfileImg) formData.append('profileImage', selectedProfileImg);
-    if (selectedCoverImg) formData.append('coverImage', selectedCoverImg);
+    // ===============================
+    // Images
+    // ===============================
+    if (selectedProfileImg) formData.append("profileImage", selectedProfileImg);
+    if (selectedCoverImg) formData.append("coverImage", selectedCoverImg);
 
     try {
-      const response = await fetch(`${API_BASE}/updateshop`, {
-        method: 'PUT',
-        credentials: "include",
-        body: formData
+      const result = await shopApi.request({
+        url: `${API_BASE}/updateshop`,
+        method: "PUT",
+        body: formData,
+        retry: 1, // 🔁 mobile-safe retry
       });
-      const result = await response.json();
+
+      if (!result) return; // request aborted safely
+
       if (result.success) {
-        alert("Shop Profile Updated!");
         setIsEditMode(false);
-        fetchShopData();
+
+        // ⏳ small delay avoids fetch overlap on mobile
+        await new Promise(r => setTimeout(r, 300));
+        await fetchShopData();
       } else {
         alert(result.message || "Update failed");
       }
+
     } catch (error) {
-      console.error("Update failed", error);
-      logToServer("save btn click", { error })
+      // 🚫 ignore AbortErrors
+      if (error.name === "AbortError") return;
+
+      console.error("Update failed:", error);
+
+      // optional: your server logger
       fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -213,40 +256,116 @@ const ShopProfile = () => {
           userAgent: navigator.userAgent,
         }),
       });
-      alert(error);
-    } finally {
-      setLoading(false);
+
+      alert("Something went wrong. Please try again.");
     }
   };
 
+
+  // const saveShopProfile = async () => {
+  //   setLoading(true);
+  //   const formData = new FormData();
+
+  //   // Text Data
+  //   Object.keys(shopData).forEach(key => {
+  //     if (key === 'socialLinks') {
+  //       formData.append('instagram', shopData.socialLinks.instagram);
+  //       formData.append('whatsapp', shopData.socialLinks.whatsapp);
+  //       formData.append('website', shopData.socialLinks.website);
+  //     } else if (key !== 'portfolio' && key !== 'shopGallery' && key !== '_id' && key !== 'createdAt' && key !== 'updatedAt') {
+  //       formData.append(key, shopData[key]);
+  //     }
+  //   });
+
+  //   // Single Images
+  //   if (selectedProfileImg) formData.append('profileImage', selectedProfileImg);
+  //   if (selectedCoverImg) formData.append('coverImage', selectedCoverImg);
+
+  //   try {
+  //     const response = await fetch(`${API_BASE}/updateshop`, {
+  //       method: 'PUT',
+  //       credentials: "include",
+  //       body: formData
+  //     });
+  //     const result = await response.json();
+  //     if (result.success) {
+  //       alert("Shop Profile Updated!");
+  //       setIsEditMode(false);
+  //       fetchShopData();
+  //     } else {
+  //       alert(result.message || "Update failed");
+  //     }
+  //   } catch (error) {
+  //     console.error("Update failed", error);
+  //     logToServer("save btn click", { error })
+  //     fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         message: error.message,
+  //         stack: error.stack,
+  //         api: "/updateshop",
+  //         route: window.location.pathname,
+  //         source: "shop",
+  //         userAgent: navigator.userAgent,
+  //       }),
+  //     });
+  //     alert(error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   // --- 5. Portfolio Handlers ---
+
   const handleAddPortfolio = async (formData) => {
+    if (portfolioApi.loading) return false;
+
     try {
-      const response = await fetch(`${API_BASE}/portfolio`, {
-        method: 'POST',
-        credentials: "include",
-        body: formData
-      });
-      const result = await response.json();
-      if (result) fetchShopData();
-      return result;
-    } catch (error) {
-      console.error(error);
-      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+      const res = await portfolioApi.request({
+        url: `${API_BASE}/portfolio`,
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: error.message,
-          stack: error.stack,
-          api: "/protfolio",
-          route: window.location.pathname,
-          source: "shop",
-          userAgent: navigator.userAgent,
-        }),
+        body: formData,
+        retry: 1
       });
+
+      if (res?.success) {
+        await fetchShopData();
+        return true;
+      }
+    } catch {
       return false;
     }
   };
+
+
+  // const handleAddPortfolio = async (formData) => {
+  //   try {
+  //     const response = await fetch(`${API_BASE}/portfolio`, {
+  //       method: 'POST',
+  //       credentials: "include",
+  //       body: formData
+  //     });
+  //     const result = await response.json();
+  //     if (result) fetchShopData();
+  //     return result;
+  //   } catch (error) {
+  //     console.error(error);
+  //     fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         message: error.message,
+  //         stack: error.stack,
+  //         api: "/protfolio",
+  //         route: window.location.pathname,
+  //         source: "shop",
+  //         userAgent: navigator.userAgent,
+  //       }),
+  //     });
+  //     return false;
+  //   }
+  // };
 
   const handleDeletePortfolio = async (itemId) => {
     try {
@@ -329,69 +448,74 @@ const ShopProfile = () => {
 // ==========================================
 // COMPONENT: ShopHeader
 // ==========================================
-const ShopHeader = ({ isEditMode, toggleEdit, onSave, isSaving }) => (
-  <div className="bg-white/90 backdrop-blur-md border-b px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+const ShopHeader = ({ isEditMode, toggleEdit, onSave, isSaving }) => {
 
-    {/* Title */}
-    <h1 className="text-base sm:text-lg font-bold text-gray-800 flex items-center gap-2">
-      <Store className="text-blue-600" />
-      <span className="hidden sm:inline">
-        {isEditMode ? 'Editing Shop' : 'Shop Preview'}
-      </span>
-    </h1>
+  const shopApi = useApi();
+  const portfolioApi = useApi();
+  return (
+    <div className="bg-white/90 backdrop-blur-md border-b px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
 
-    {/* Actions */}
-    <div className="flex items-center gap-2 sm:gap-3">
+      {/* Title */}
+      <h1 className="text-base sm:text-lg font-bold text-gray-800 flex items-center gap-2">
+        <Store className="text-blue-600" />
+        <span className="hidden sm:inline">
+          {isEditMode ? 'Editing Shop' : 'Shop Preview'}
+        </span>
+      </h1>
 
-      {/* Edit / Cancel */}
-      <button
-        onClick={toggleEdit}
-        disabled={isSaving}
-        className={`p-2 sm:px-4 sm:py-2 rounded-full text-sm font-medium transition-all
+      {/* Actions */}
+      <div className="flex items-center gap-2 sm:gap-3">
+
+        {/* Edit / Cancel */}
+        <button
+          onClick={toggleEdit}
+          disabled={isSaving}
+          className={`p-2 sm:px-4 sm:py-2 rounded-full text-sm font-medium transition-all
           ${isEditMode
-            ? 'bg-blue-50 text-blue-700 border border-blue-200'
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }
+              ? 'bg-blue-50 text-blue-700 border border-blue-200'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }
           ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}
         `}
-      >
-        <span className="sm:hidden">
-          {isEditMode ? <X size={18} /> : <LayoutGrid size={18} />}
-        </span>
-        <span className="hidden sm:inline">
-          {isEditMode ? 'Cancel Edit' : 'Edit Profile'}
-        </span>
-      </button>
-
-      {/* Save Button */}
-
-      {isEditMode && (
-        <button
-          onClick={onSave}
-          disabled={isSaving}
-          className={`bg-blue-600 text-white p-2 sm:px-6 sm:py-2 rounded-full text-sm font-medium
-            flex items-center gap-2 shadow-md transition-all
-            ${isSaving
-              ? 'opacity-70 cursor-not-allowed'
-              : 'hover:bg-blue-700 hover:shadow-lg'
-            }
-          `}
         >
-          {/* Loader */}
-          {isSaving ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : (
-            <Save size={16} />
-          )}
-
+          <span className="sm:hidden">
+            {isEditMode ? <X size={18} /> : <LayoutGrid size={18} />}
+          </span>
           <span className="hidden sm:inline">
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            {isEditMode ? 'Cancel Edit' : 'Edit Profile'}
           </span>
         </button>
-      )}
+
+        {/* Save Button */}
+
+        {isEditMode && (
+          <button
+            onClick={onSave}
+            disabled={shopApi.loading}
+            className={`bg-blue-600 text-white p-2 sm:px-6 sm:py-2 rounded-full text-sm font-medium
+            flex items-center gap-2 shadow-md transition-all
+            ${isSaving
+                ? 'opacity-70 cursor-not-allowed'
+                : 'hover:bg-blue-700 hover:shadow-lg'
+              }
+          `}
+          >
+            {/* Loader */}
+            {isSaving ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Save size={16} />
+            )}
+
+            <span className="hidden sm:inline">
+              {shopApi.loading ? 'Saving...' : 'Save Changes'}
+            </span>
+          </button>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+}
 
 
 
@@ -612,13 +736,14 @@ const ShopDetails = ({ isEditMode, data, onChange }) => (
 // COMPONENT: PortfolioManager
 // ==========================================
 const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
-  console.log(items);
   const [isAdding, setIsAdding] = useState(false);
   const [newItem, setNewItem] = useState({ title: '', price: '', image: null, category: "Cake", unitType: "kg", unitValue: "250" });
   const [loading, setLoading] = useState(false);
   const [cropSrc, setCropSrc] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
 
+  const shopApi = useApi();
+  const portfolioApi = useApi();
   useEffect(() => {
     if (newItem.unitType === "kg") {
       setNewItem(prev => ({ ...prev, unitValue: "250" }));
@@ -827,10 +952,10 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
               </div>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={portfolioApi.loading}
                 className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-md disabled:bg-blue-400"
               >
-                {loading ? 'Saving...' : 'Add to Portfolio'}
+                {portfolioApi.loading ? 'Saving...' : 'Add to Portfolio'}
               </button>
             </div>
           </form>

@@ -32,8 +32,8 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
-    ErrorBoundary: <ErrorBoundary />,
-    errorElement: <div className="p-10 text-center">404 - Page Not Found</div>,
+    // ErrorBoundary: <ErrorBoundary />,
+    errorElement: <ErrorBoundary />,
     children: [
       { index: true, element: <Navigate to="/login" replace /> },
 
@@ -89,7 +89,7 @@ window.onunhandledrejection = function (event) {
     }),
   });
 };
-initNetworkLogger(); 
+initNetworkLogger();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
