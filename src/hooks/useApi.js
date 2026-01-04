@@ -12,7 +12,7 @@ export default function useApi() {
     method = "GET",
     body = null,
     headers = {},
-    credentials = "include",
+    credentials = "include", 
     retry = 0,
   }) => {
     if (inFlightRef.current) return null;

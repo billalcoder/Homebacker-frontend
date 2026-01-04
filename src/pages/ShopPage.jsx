@@ -92,6 +92,7 @@ const ShopProfile = () => {
     setShopData(data);
     setPreviewProfile(data.profileImage);
     setPreviewCover(data.coverImage);
+    setLoading(false);
   };
 
   const handleSave = async () => {
@@ -579,8 +580,8 @@ const ShopHero = ({ isEditMode, coverPreview, profilePreview, onImageSelect, por
             {/* Content Overlay */}
             <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 text-white flex flex-col items-center text-center pb-24 md:pb-32 animate-in slide-in-from-bottom-10 duration-700">
               <span className="bg-blue-600 text-xs font-bold px-3 py-1 rounded-full mb-3 uppercase tracking-wider">Featured Product</span>
-              <h2 className="text-4xl md:text-5xl font-bold mb-2 text-shadow">{item.title}</h2>
-              <p className="text-2xl font-light text-blue-200">₹{item.price}</p>
+              <h2 className="text-4xl md:text-5xl font-bold mb-2 text-shadow">{item.productName || "title"}</h2>
+              <p className="text-2xl font-light text-blue-200">₹{item.price || "price"}</p>
             </div>
           </div>
         ))}
@@ -620,7 +621,7 @@ const ShopHero = ({ isEditMode, coverPreview, profilePreview, onImageSelect, por
 const ProfilePicOverlay = ({ preview, isEditMode, onImageSelect }) => (
   <div className="absolute -bottom-16 left-6 md:left-10 z-20">
     <div className="relative w-36 h-36 rounded-full border-[6px] border-white shadow-xl bg-white overflow-hidden group">
-      <img src={preview} alt="Profile" className="w-full h-full object-cover" />
+      <img src={preview ? preview : "https://via.placeholder.com/300x300"} alt="Profile" className="w-full h-full object-cover" />
       {isEditMode && (
         <label className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
           <Camera className="text-white" size={24} />
@@ -644,7 +645,7 @@ const ShopDetails = ({ isEditMode, data, onChange }) => (
           <div>
             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Shop Name</label>
             <input
-              name="shopName" value={data.shopName} onChange={onChange}
+              name="shopName" value={data.shopName || "shopname"} onChange={onChange}
               placeholder="Enter Shop Name"
               className="w-full text-4xl font-extrabold text-gray-900 border-b-2 border-blue-100 focus:border-blue-600 outline-none pb-2 bg-transparent placeholder-gray-300 transition-colors"
             />
