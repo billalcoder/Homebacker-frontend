@@ -2,153 +2,129 @@ import React, { useState, useEffect } from 'react';
 import ProductItem from '../components/ProductItem';
 import ProductFormModal from '../components/ProductFormModal';
 import Button from '../components/Button';
+import useApi from "../hooks/useApi";
 
 const UploadProduct = () => {
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null); // Holds product being edited
-
+  const productApi = useApi();        // GET / DELETE
+  const productMutateApi = useApi(); // POST / PUT
+const loading = productApi.loading;
   // --- API Functions ---
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${import.meta.env.VITE_BASEURL}/client/getproduct`, { credentials: "include" });
-      const data = await res.json();
-      console.log(data);
+const fetchProducts = async () => {
+  try {
+    const data = await productApi.request({
+      url: `${import.meta.env.VITE_BASEURL}/client/getproduct`,
+      retry: 1,
+    });
 
-      if (res.ok) {
-        // Handle case where backend might return { products: [...] } or just [...]
-        const productList = data.data || (Array.isArray(data) ? data : []);
-        setProducts(productList);
-      } else {
-        console.error("Failed to fetch products");
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: error.message,
-          stack: error.stack,
-          api: "/client/product",
-          route: window.location.pathname,
-          source: "product",
-          userAgent: navigator.userAgent,
-        }),
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (!data) return; // aborted safely
+
+    const productList = data.data || (Array.isArray(data) ? data : []);
+    setProducts(productList);
+
+  } catch (error) {
+    if (error.name === "AbortError") return;
+
+    fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: error.message,
+        stack: error.stack,
+        api: "/client/getproduct",
+        route: window.location.pathname,
+        source: "product",
+        userAgent: navigator.userAgent,
+      }),
+    });
+  }
+};
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  const handleCreate = async (formData) => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_BASEURL}/client/product`, {
-        method: 'POST',
-        // IMPORTANT: Do NOT set Content-Type header when sending FormData.
-        // The browser automatically sets it to multipart/form-data with the correct boundary.
-        body: formData,
-        credentials: "include"
-      });
+const handleCreate = async (formData) => {
+  if (productMutateApi.loading) return;
 
-      if (res.ok) {
-        setIsModalOpen(false);
-        fetchProducts(); // Refresh list to show new item
-      } else {
-        const errData = await res.json();
-        alert(errData.message || "Failed to create product");
-      }
-    } catch (error) {
-      console.error("Error creating:", error);
-      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: error.message,
-          stack: error.stack,
-          api: "/client/product",
-          route: window.location.pathname,
-          source: "product",
-          userAgent: navigator.userAgent,
-        }),
-      });
-      alert("Something went wrong. Please try again.");
+  try {
+    const res = await productMutateApi.request({
+      url: `${import.meta.env.VITE_BASEURL}/client/product`,
+      method: "POST",
+      body: formData,
+      retry: 1,
+    });
+
+    // 🚪 Close modal FIRST (UI response)
+    setIsModalOpen(false);
+
+    // 🔄 Clear edit state if any
+    setEditingProduct(null);
+
+    // ⏳ Small delay avoids mobile race conditions
+    await new Promise(r => setTimeout(r, 300));
+
+    // 🔁 Always refresh products
+    await fetchProducts();
+
+  } catch (error) {
+    if (error.name === "AbortError") return;
+    alert("Something went wrong. Please try again.");
+  }
+};
+
+
+const handleUpdate = async (formData) => {
+  if (!editingProduct || productMutateApi.loading) return;
+
+  try {
+    const res = await productMutateApi.request({
+      url: `${import.meta.env.VITE_BASEURL}/client/product/${editingProduct._id}`,
+      method: "PUT",
+      body: formData,
+      retry: 1,
+    });
+
+    if (res?.success) {
+      setIsModalOpen(false);
+      setEditingProduct(null);
+      await new Promise(r => setTimeout(r, 300));
+      await fetchProducts();
+    } else {
+      alert(res?.message || "Failed to update product");
     }
-  };
 
-  const handleUpdate = async (formData) => {
-    if (!editingProduct) return;
-    try {
-      const res = await fetch(`${import.meta.env.VITE_BASEURL}/client/product/${editingProduct._id}`, {
-        method: 'PUT',
-        body: formData,
-        credentials: "include"
-      });
+  } catch (error) {
+    if (error.name === "AbortError") return;
+    alert("Something went wrong. Please try again.");
+  }
+};
 
-      if (res.ok) {
-        setIsModalOpen(false);
-        setEditingProduct(null);
-        fetchProducts(); // Refresh list
-      } else {
-        const errData = await res.json();
-        alert(errData.message || "Failed to update product");
-      }
-    } catch (error) {
-      console.error("Error updating:", error);
-      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: error.message,
-          stack: error.stack,
-          api: "/client/product./id",
-          route: window.location.pathname,
-          source: "DashboardHome",
-          userAgent: navigator.userAgent,
-        }),
-      });
-      alert("Something went wrong. Please try again.");
-    }
-  };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) return;
+const handleDelete = async (id) => {
+  if (!window.confirm("Are you sure you want to delete this product?")) return;
+  if (productApi.loading) return;
 
-    try {
-      const res = await fetch(`${import.meta.env.VITE_BASEURL}/client/product/${id}`, {
-        method: 'DELETE',
-        credentials: "include"
-      });
+  // Optimistic UI
+  setProducts(prev => prev.filter(p => p._id !== id));
 
-      if (res.ok) {
-        // Optimistically remove from state so we don't have to wait for a re-fetch
-        setProducts(prev => prev.filter(p => p._id !== id));
-      } else {
-        alert("Failed to delete product");
-      }
-    } catch (error) {
-      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: error.message,
-          stack: error.stack,
-          api: "/client/product/id",
-          route: window.location.pathname,
-          source: "product",
-          userAgent: navigator.userAgent,
-        }),
-      });
-      console.error("Error deleting:", error);
-    }
-  };
+  try {
+    await productApi.request({
+      url: `${import.meta.env.VITE_BASEURL}/client/product/${id}`,
+      method: "DELETE",
+      retry: 1,
+    });
+  } catch (error) {
+    if (error.name === "AbortError") return;
+    alert("Delete failed. Refreshing...");
+    fetchProducts();
+  }
+};
+
 
   // --- Event Handlers ---
 
@@ -195,7 +171,7 @@ const UploadProduct = () => {
           <h3 className="text-xl font-bold text-stone-700 mb-2">No Products Yet</h3>
           <p className="text-stone-500 mb-6 max-w-xs mx-auto">Start building your menu by adding your first delicious item.</p>
           <div className="w-48 mx-auto">
-            <Button text="Upload First Product" onClick={openAddModal} />
+            <Button text="Upload First Product" onClick={openAddModal} disabled={productMutateApi.loading}/>
           </div>
         </div>
 
