@@ -43,6 +43,7 @@ const ShopProfile = () => {
     fetchShopData();
   }, []);
 
+
   const fetchShopData = async () => {
     try {
       const response = await fetch(`${API_BASE}/getshop`, {
@@ -56,6 +57,18 @@ const ShopProfile = () => {
       }
     } catch (error) {
       console.error("Error fetching shop:", error);
+      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error.message,
+          stack: error.stack,
+          api: "/getshop",
+          route: window.location.pathname,
+          source: "shop",
+          userAgent: navigator.userAgent,
+        }),
+      });
     } finally {
       setLoading(false);
     }
@@ -188,7 +201,19 @@ const ShopProfile = () => {
     } catch (error) {
       console.error("Update failed", error);
       logToServer("save btn click", { error })
-      alert("Failed to update profile");
+      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error.message,
+          stack: error.stack,
+          api: "/updateshop",
+          route: window.location.pathname,
+          source: "shop",
+          userAgent: navigator.userAgent,
+        }),
+      });
+      alert(error);
     } finally {
       setLoading(false);
     }
@@ -207,6 +232,18 @@ const ShopProfile = () => {
       return result;
     } catch (error) {
       console.error(error);
+      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error.message,
+          stack: error.stack,
+          api: "/protfolio",
+          route: window.location.pathname,
+          source: "shop",
+          userAgent: navigator.userAgent,
+        }),
+      });
       return false;
     }
   };
@@ -225,6 +262,18 @@ const ShopProfile = () => {
       }
     } catch (error) {
       console.error(error);
+      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error.message,
+          stack: error.stack,
+          api: "/protfolio/id",
+          route: window.location.pathname,
+          source: "shop",
+          userAgent: navigator.userAgent,
+        }),
+      });
     }
   };
 
@@ -282,7 +331,7 @@ const ShopProfile = () => {
 // ==========================================
 const ShopHeader = ({ isEditMode, toggleEdit, onSave, isSaving }) => (
   <div className="bg-white/90 backdrop-blur-md border-b px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
-    {console.log(isSaving)}
+
     {/* Title */}
     <h1 className="text-base sm:text-lg font-bold text-gray-800 flex items-center gap-2">
       <Store className="text-blue-600" />
@@ -351,7 +400,6 @@ const ShopHeader = ({ isEditMode, toggleEdit, onSave, isSaving }) => (
 // ==========================================
 const ShopHero = ({ isEditMode, coverPreview, profilePreview, onImageSelect, portfolioItems }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  console.log(portfolioItems);
   // Auto-slide effect for Preview Mode
   useEffect(() => {
     if (isEditMode || portfolioItems.length === 0) return;
@@ -464,6 +512,7 @@ const ProfilePicOverlay = ({ preview, isEditMode, onImageSelect }) => (
 // ==========================================
 const ShopDetails = ({ isEditMode, data, onChange }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-10 pt-4">
+    {console.log(data)}
     {/* Left Column: Details */}
     <div className="md:col-span-2 space-y-6">
       {isEditMode ? (
@@ -563,6 +612,7 @@ const ShopDetails = ({ isEditMode, data, onChange }) => (
 // COMPONENT: PortfolioManager
 // ==========================================
 const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
+  console.log(items);
   const [isAdding, setIsAdding] = useState(false);
   const [newItem, setNewItem] = useState({ title: '', price: '', image: null, category: "Cake", unitType: "kg", unitValue: "250" });
   const [loading, setLoading] = useState(false);
@@ -798,7 +848,6 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {items.map((item) => (
             <div key={item._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all group relative duration-300">
-              {console.log(item)}
               <div className="h-48 bg-gray-100 relative overflow-hidden">
                 <img src={item.images} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />

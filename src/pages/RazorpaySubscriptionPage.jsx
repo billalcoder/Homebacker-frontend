@@ -13,22 +13,34 @@ export default function SubscribePage() {
       const res = await fetch(`${import.meta.env.VITE_BASEURL}/payment/create-subscription`, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+          "Content-Type": "application/json"
         },
         // Include credentials if your backend requires auth cookie/token
-        credentials: "include" 
+        credentials: "include"
       });
-      
+
       const data = await res.json();
       console.log("Subscription Created:", data);
-      
+
       if (data.subscription_id) {
-          setSubscriptionId(data.subscription_id);
+        setSubscriptionId(data.subscription_id);
       } else {
-          alert("Failed to initiate subscription. Check backend.");
+        alert("Failed to initiate subscription. Check backend.");
       }
     } catch (error) {
       console.error("Payment Error:", error);
+      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error.message,
+          stack: error.stack,
+          api: "/payment/create-subscription",
+          route: window.location.pathname,
+          source: "payment",
+          userAgent: navigator.userAgent,
+        }),
+      });
       alert("Connection error. Please try again.");
     } finally {
       setLoading(false);
@@ -37,7 +49,7 @@ export default function SubscribePage() {
 
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center p-6 font-sans">
-      
+
       {/* Header Section */}
       <div className="text-center mb-10">
         <h1 className="text-4xl font-extrabold text-stone-800 mb-2">Upgrade Your Bakery</h1>
@@ -46,7 +58,7 @@ export default function SubscribePage() {
 
       {/* Pricing Card */}
       <div className="bg-white rounded-3xl shadow-xl border border-stone-100 overflow-hidden w-full max-w-md relative hover:shadow-2xl transition-shadow duration-300">
-        
+
         {/* Popular Badge */}
         <div className="bg-amber-500 text-white text-xs font-bold px-3 py-1 absolute top-0 right-0 rounded-bl-xl">
           MOST POPULAR
@@ -56,7 +68,7 @@ export default function SubscribePage() {
           {/* Plan Title */}
           <div className="flex items-center gap-2 mb-4">
             <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
-                <Star size={20} fill="currentColor" />
+              <Star size={20} fill="currentColor" />
             </div>
             <h2 className="text-2xl font-bold text-stone-800">Baker Plan</h2>
           </div>
@@ -79,7 +91,7 @@ export default function SubscribePage() {
             ].map((feature, index) => (
               <li key={index} className="flex items-start gap-3 text-stone-600">
                 <div className="mt-0.5 bg-green-100 p-0.5 rounded-full">
-                    <Check size={14} className="text-green-600" strokeWidth={3} />
+                  <Check size={14} className="text-green-600" strokeWidth={3} />
                 </div>
                 <span className="text-sm font-medium">{feature}</span>
               </li>
@@ -87,24 +99,24 @@ export default function SubscribePage() {
           </ul>
 
           {/* Action Button */}
-          <button 
+          <button
             onClick={createSubscription}
             disabled={loading}
             className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-amber-200 hover:from-amber-700 hover:to-orange-700 transform hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2"
           >
             {loading ? (
-                <>
-                    <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
-                    Processing...
-                </>
+              <>
+                <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+                Processing...
+              </>
             ) : (
-                <>
-                    <Zap size={20} fill="currentColor" />
-                    Start Subscription
-                </>
+              <>
+                <Zap size={20} fill="currentColor" />
+                Start Subscription
+              </>
             )}
           </button>
-          
+
           <p className="text-xs text-stone-400 text-center mt-4">
             Secure payment via Razorpay. Cancel anytime.
           </p>
@@ -122,7 +134,7 @@ export default function SubscribePage() {
         <RazorpaySubscription
           subscriptionId={subscriptionId}
           // You can fetch real user data from context or props here
-          user={{ name: "Chef John", email: "john@bakery.com" }} 
+          user={{ name: "Chef John", email: "john@bakery.com" }}
         />
       )}
     </div>

@@ -8,6 +8,8 @@ import {
 
 import App from "./App";
 import "./index.css";
+import ErrorBoundary from "./ErrorBoundary";
+import Network from "./pages/Network";
 
 /* 🔥 Lazy-loaded Pages */
 const Register = lazy(() => import("./pages/Register"));
@@ -23,11 +25,14 @@ const Portfolio = lazy(() => import("./pages/PortfolioPage"));
 const ShopProfile = lazy(() => import("./pages/ShopPage"));
 const Order = lazy(() => import("./pages/Order"));
 const SubscribePage = lazy(() => import("./pages/RazorpaySubscriptionPage"));
+import { initNetworkLogger } from "./utils/networkLogger";
+
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
+    ErrorBoundary: <ErrorBoundary />,
     errorElement: <div className="p-10 text-center">404 - Page Not Found</div>,
     children: [
       { index: true, element: <Navigate to="/login" replace /> },
@@ -37,6 +42,7 @@ const router = createBrowserRouter([
       { path: "settings", element: <Settings /> },
       { path: "support", element: <Support /> },
       { path: "terms", element: <TermsAndConditions /> },
+      { path: "network", element: <Network /> },
       /* 🔥 DASHBOARD ROUTES */
       {
         path: "dashboard",
@@ -54,10 +60,43 @@ const router = createBrowserRouter([
   },
 ]);
 
+window.onerror = function (message, source, lineno, colno, error) {
+  fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      message,
+      stack: error?.stack,
+      route: window.location.pathname,
+      source: "frontend",
+      platform: navigator.platform,
+      userAgent: navigator.userAgent,
+    }),
+  });
+};
+
+window.onunhandledrejection = function (event) {
+  fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message: event.reason?.message || "Unhandled Promise rejection",
+      stack: event.reason?.stack,
+      route: window.location.pathname,
+      source: "frontend",
+      platform: navigator.platform,
+    }),
+  });
+};
+initNetworkLogger(); 
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <Suspense fallback={<div className="p-10 text-center">Loading...</div>}>
-      <RouterProvider router={router} />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<div className="p-10 text-center">Loading...</div>}>
+        <RouterProvider router={router} />
+      </Suspense>
+    </ErrorBoundary>
   </React.StrictMode>
 );

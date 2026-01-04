@@ -29,6 +29,18 @@ const DashboardHome = () => {
 
     } catch (error) {
       console.error(error);
+      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error.message,
+          stack: error.stack,
+          api: "/order/length",
+          route: window.location.pathname,
+          source: "DashboardHome",
+          userAgent: navigator.userAgent,
+        }),
+      });
       navigate("/login");
     }
   };

@@ -32,29 +32,57 @@ const Orders = () => {
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
+      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error.message,
+          stack: error.stack,
+          api: "/order/shop",
+          route: window.location.pathname,
+          source: "DashboardHome",
+          userAgent: navigator.userAgent,
+        }),
+      });
     } finally {
       setLoadingList(false);
     }
   };
 
   async function updateStatus(nextStatus) {
-    const res = await fetch(`${import.meta.env.VITE_BASEURL}/order/update`, {
-      method: "PUT",
-      body: JSON.stringify({
-        orderId: selectedOrder._id,
-        status: nextStatus
-      }),
-      headers: { "Content-Type": "application/json" },
-      credentials: "include"
-    });
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BASEURL}/order/update`, {
+        method: "PUT",
+        body: JSON.stringify({
+          orderId: selectedOrder._id,
+          status: nextStatus
+        }),
+        headers: { "Content-Type": "application/json" },
+        credentials: "include"
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (data.success) {
-      fetchOrders(); // refresh list
-      closeModal()
-    } else {
-      console.log(data);
+      if (data.success) {
+        fetchOrders(); // refresh list
+        closeModal()
+      } else {
+        console.log(data);
+      }
+    } catch (error) {
+      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error.message,
+          stack: error.stack,
+          api: "/order/length",
+          route: window.location.pathname,
+          source: "DashboardHome",
+          userAgent: navigator.userAgent,
+        }),
+      });
+      alert("server error")
     }
   }
 
@@ -80,6 +108,18 @@ const Orders = () => {
       }
     } catch (error) {
       console.error("Error fetching order details:", error);
+      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error.message,
+          stack: error.stack,
+          api: "/order/get/id",
+          route: window.location.pathname,
+          source: "order",
+          userAgent: navigator.userAgent,
+        }),
+      });
     } finally {
       setLoadingDetails(false);
     }

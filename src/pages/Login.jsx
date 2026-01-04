@@ -84,6 +84,18 @@ const Login = () => {
 
     } catch (err) {
       logToServer("login error", { err })
+      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: err.message,
+          stack: err.stack,
+          api: "/client/login",
+          route: window.location.pathname,
+          source: "login",
+          userAgent: navigator.userAgent,
+        }),
+      });
       setStatus({ loading: false, error: err.message, success: false });
     }
   };

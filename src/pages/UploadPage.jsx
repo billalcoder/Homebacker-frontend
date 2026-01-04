@@ -14,10 +14,10 @@ const UploadProduct = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${import.meta.env.VITE_BASEURL}/client/getproduct` , {credentials : "include"});
+      const res = await fetch(`${import.meta.env.VITE_BASEURL}/client/getproduct`, { credentials: "include" });
       const data = await res.json();
       console.log(data);
-      
+
       if (res.ok) {
         // Handle case where backend might return { products: [...] } or just [...]
         const productList = data.data || (Array.isArray(data) ? data : []);
@@ -27,6 +27,18 @@ const UploadProduct = () => {
       }
     } catch (error) {
       console.error("Error fetching products:", error);
+      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error.message,
+          stack: error.stack,
+          api: "/client/product",
+          route: window.location.pathname,
+          source: "product",
+          userAgent: navigator.userAgent,
+        }),
+      });
     } finally {
       setLoading(false);
     }
@@ -42,10 +54,10 @@ const UploadProduct = () => {
         method: 'POST',
         // IMPORTANT: Do NOT set Content-Type header when sending FormData.
         // The browser automatically sets it to multipart/form-data with the correct boundary.
-        body: formData, 
-        credentials : "include"
+        body: formData,
+        credentials: "include"
       });
-      
+
       if (res.ok) {
         setIsModalOpen(false);
         fetchProducts(); // Refresh list to show new item
@@ -55,6 +67,18 @@ const UploadProduct = () => {
       }
     } catch (error) {
       console.error("Error creating:", error);
+      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error.message,
+          stack: error.stack,
+          api: "/client/product",
+          route: window.location.pathname,
+          source: "product",
+          userAgent: navigator.userAgent,
+        }),
+      });
       alert("Something went wrong. Please try again.");
     }
   };
@@ -65,7 +89,7 @@ const UploadProduct = () => {
       const res = await fetch(`${import.meta.env.VITE_BASEURL}/client/product/${editingProduct._id}`, {
         method: 'PUT',
         body: formData,
-        credentials : "include"
+        credentials: "include"
       });
 
       if (res.ok) {
@@ -78,6 +102,18 @@ const UploadProduct = () => {
       }
     } catch (error) {
       console.error("Error updating:", error);
+      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error.message,
+          stack: error.stack,
+          api: "/client/product./id",
+          route: window.location.pathname,
+          source: "DashboardHome",
+          userAgent: navigator.userAgent,
+        }),
+      });
       alert("Something went wrong. Please try again.");
     }
   };
@@ -88,7 +124,7 @@ const UploadProduct = () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_BASEURL}/client/product/${id}`, {
         method: 'DELETE',
-        credentials : "include"
+        credentials: "include"
       });
 
       if (res.ok) {
@@ -98,6 +134,18 @@ const UploadProduct = () => {
         alert("Failed to delete product");
       }
     } catch (error) {
+      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error.message,
+          stack: error.stack,
+          api: "/client/product/id",
+          route: window.location.pathname,
+          source: "product",
+          userAgent: navigator.userAgent,
+        }),
+      });
       console.error("Error deleting:", error);
     }
   };
@@ -118,12 +166,12 @@ const UploadProduct = () => {
 
   return (
     <div className="p-6 relative min-h-[80vh]">
-      
+
       {/* 1. Top Header Area (Only visible if we have products) */}
       {products.length > 0 && (
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-stone-700">My Products</h2>
-          <button 
+          <button
             onClick={openAddModal}
             className="bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-amber-700 transition-colors flex items-center transform hover:scale-105 duration-200"
           >
@@ -136,7 +184,7 @@ const UploadProduct = () => {
       {loading ? (
         <div className="text-center py-20 text-stone-400 font-medium">Loading your bakery items...</div>
       ) : products.length === 0 ? (
-        
+
         // EMPTY STATE: Centered Button
         <div className="flex flex-col items-center justify-center h-[60vh] text-center animate-fade-in">
           <div className="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mb-4 text-amber-500 shadow-inner">
@@ -152,24 +200,24 @@ const UploadProduct = () => {
         </div>
 
       ) : (
-        
+
         // POPULATED STATE: Grid List
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-20 animate-fade-in">
           {products.map(product => (
-            <ProductItem 
-              key={product._id} 
-              product={product} 
-              onEdit={openEditModal} 
-              onDelete={handleDelete} 
+            <ProductItem
+              key={product._id}
+              product={product}
+              onEdit={openEditModal}
+              onDelete={handleDelete}
             />
           ))}
         </div>
       )}
 
       {/* 3. The Modal (Handles both Add and Edit) */}
-      <ProductFormModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <ProductFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         onSubmit={editingProduct ? handleUpdate : handleCreate}
         initialData={editingProduct}
       />
