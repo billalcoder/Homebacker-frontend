@@ -5,7 +5,7 @@ import { getCroppedImage } from "../utils/cropImage";
 import FormInput from '../components/FormInput';
 import { logToServer } from '../utils/logs';
 import useApi from "../hooks/useApi";
-
+import { compressImage } from "../utils/compressImage";
 
 // ==========================================
 // PARENT COMPONENT: ShopProfile
@@ -334,7 +334,10 @@ const ShopProfile = () => {
         await fetchShopData();
         return true;
       }
-    } catch {
+      return false;
+    } catch (err) {
+      alert(err)
+      alert(portfolioApi.error || "Upload failed");
       return false;
     }
   };
@@ -619,7 +622,7 @@ const ShopHero = ({ isEditMode, coverPreview, profilePreview, onImageSelect, por
 
 // Helper for Profile Pic to reduce duplication
 const ProfilePicOverlay = ({ preview, isEditMode, onImageSelect }) => (
-  <div className="absolute -bottom-16 left-6 md:left-10 z-20">
+  <div className="absolute -bottom-16 left-6 md:left-10 z-0">
     <div className="relative w-36 h-36 rounded-full border-[6px] border-white shadow-xl bg-white overflow-hidden group">
       <img src={preview ? preview : "https://via.placeholder.com/300x300"} alt="Profile" className="w-full h-full object-cover" />
       {isEditMode && (
@@ -742,6 +745,8 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
   const [loading, setLoading] = useState(false);
   const [cropSrc, setCropSrc] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [imageProcessing, setImageProcessing] = useState(false);
 
   const shopApi = useApi();
   const portfolioApi = useApi();
@@ -753,11 +758,21 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
     }
   }, [newItem.unitType]);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newItem.image || !newItem.title || !newItem.price) return alert("All fields required");
 
     setLoading(true);
+
+    const compressedImage = await compressImage(newItem.image);
     const formData = new FormData();
 
     // 1. Append Text Fields FIRST (Critical for Multer/Backend parsing)
@@ -770,20 +785,27 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
     // 2. Append File LAST
     // Ensure this key matches your backend: upload.single('portfolioImages') vs 'image'
     // You mentioned your backend route uses 'portfolioImages'
-    formData.append('portfolioImages', newItem.image);
+    formData.append('portfolioImages', compressedImage);
 
 
     // Debug: Check console to see what is being sent
     console.log("Submitting Portfolio Item:", {
       title: newItem.title,
       price: newItem.price,
-      image: newItem.image.name,
+      image: newItem.image?.name || "no-file",
       category: newItem.category,
       unitType: newItem.unitType,
       unitValue: newItem.unitValue
     });
 
-    const success = await onAdd(formData);
+    let success = false;
+
+    try {
+      success = await onAdd(formData);
+    } finally {
+      setLoading(false);
+    }
+
     const DEFAULT_ITEM = {
       title: '',
       price: '',
@@ -793,7 +815,6 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
       unitValue: "250"
     };
 
-    setLoading(false);
     if (success) {
       setIsAdding(false);
       setNewItem(DEFAULT_ITEM);
@@ -803,11 +824,25 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
   };
 
   const handleCropDone = async (pixels) => {
-    const croppedFile = await getCroppedImage(cropSrc, pixels);
-    setNewItem(prev => ({ ...prev, image: croppedFile }));
-    setShowCropper(false);
-    setCropSrc(null);
+    try {
+      setImageProcessing(true);
+
+      const croppedFile = await getCroppedImage(cropSrc, pixels);
+      const compressedImage = await compressImage(croppedFile);
+
+      setNewItem(prev => ({ ...prev, image: compressedImage }));
+      setPreviewUrl(URL.createObjectURL(compressedImage));
+
+      setShowCropper(false);
+      setCropSrc(null);
+    } catch (err) {
+      console.error("Image processing failed:", err);
+      alert("Failed to process image");
+    } finally {
+      setImageProcessing(false);
+    }
   };
+
   const handleCropCancel = () => {
     setShowCropper(false);
     setCropSrc(null);
@@ -846,7 +881,7 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
             {/* Image Input */}
             <div className="bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center h-40 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors relative group">
               {newItem.image ? (
-                <img src={URL.createObjectURL(newItem.image)} className="h-full w-full object-cover rounded-xl" alt="preview" />
+                <img src={previewUrl} className="h-full w-full object-cover rounded-xl" alt="preview" />
               ) : (
                 <div className="text-center text-gray-400 group-hover:text-blue-500">
                   <Camera className="mx-auto mb-2" size={24} />
@@ -983,7 +1018,7 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
                 {/* Ensure we render price, defaulting to 0 if undefined */}
                 <p className="text-blue-600 font-bold mt-1">₹{item.price || "0"}</p>
               </div>
-
+              {console.log(item)}
               {isEditMode && (
                 <button
                   onClick={() => onDelete(item._id)}

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Button from './Button'; // Reusing your existing button
 import FormInput from './FormInput'; // Reusing your input
-
 import Cropper from "react-easy-crop";
 import { getCroppedImage } from "../utils/cropImage";
 import ImageCropper from './ImageCropper';
+import { compressImage } from '../utils/compressImage';
 
 const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
   const [formData, setFormData] = useState({
@@ -18,40 +18,52 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
 
   const [imageFile, setImageFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
-
-
+  const [imageProcessing, setImageProcessing] = useState(false);
+  const [isObjectUrl, setIsObjectUrl] = useState(false);
   const [imageSrc, setImageSrc] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl && isObjectUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl, isObjectUrl]);
+
 
   // Reset or Pre-fill form when modal opens
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
-        productName: initialData.productName,
-        price: initialData.price,
-        category: initialData.category,
-        productDescription: initialData.productDescription || "",
-        unitType: initialData.unitType,
-        unitValue: initialData.unitValue,
-      });
+useEffect(() => {
+  if (initialData) {
+    setFormData({
+      productName: initialData.productName,
+      price: initialData.price,
+      category: initialData.category,
+      productDescription: initialData.productDescription || "",
+      unitType: initialData.unitType,
+      unitValue: initialData.unitValue,
+    });
 
-      if (initialData.images && initialData.images.length > 0) {
-        setPreviewUrl(initialData.images[0]);
-      }
-    } else {
-      setFormData({
-        productName: "",
-        price: "",
-        category: "Cake",
-        productDescription: "",
-        unitType: "kg",
-        unitValue: "250",
-      });
-      setImageFile(null);
-      setPreviewUrl("");
+    if (initialData.images && initialData.images.length > 0) {
+      setPreviewUrl(initialData.images[0]); // server image
+      setIsObjectUrl(false); // ✅ IMPORTANT
     }
-  }, [initialData, isOpen]);
+  } else {
+    setFormData({
+      productName: "",
+      price: "",
+      category: "Cake",
+      productDescription: "",
+      unitType: "kg",
+      unitValue: "250",
+    });
+
+    setImageFile(null);
+    setPreviewUrl("");
+    setIsObjectUrl(false); // ✅ reset safely
+  }
+}, [initialData, isOpen]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -91,6 +103,14 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (imageProcessing) {
+      alert("Please wait, image is processing...");
+      return;
+    }
+    if (!imageFile && !initialData) {
+      alert("Please upload a product image");
+      return;
+    }
 
     const data = new FormData();
     data.append("productName", formData.productName);
@@ -108,14 +128,26 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
   };
 
   const handleCropDone = async (croppedPixels) => {
-    const croppedFile = await getCroppedImage(imageSrc, croppedPixels);
+    try {
+      setImageProcessing(true);
 
-    setImageFile(croppedFile);
-    setPreviewUrl(URL.createObjectURL(croppedFile));
+      const croppedFile = await getCroppedImage(imageSrc, croppedPixels);
+      const compressedImage = await compressImage(croppedFile);
 
-    setShowCropper(false);
-    setImageSrc(null);
+      setImageFile(compressedImage);
+      setPreviewUrl(URL.createObjectURL(compressedImage));
+      setIsObjectUrl(true);
+
+      setShowCropper(false);
+      setImageSrc(null);
+    } catch (err) {
+      console.error("Image processing failed:", err);
+      alert("Failed to process image");
+    } finally {
+      setImageProcessing(false);
+    }
   };
+
 
   if (!isOpen) return null;
 
@@ -213,7 +245,7 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
                 Cancel
               </button>
               <div className="flex-1">
-                <Button text={initialData ? "Update Product" : "Add Product"} type="submit" />
+                <Button text={initialData ? "Update Product" : "Add Product"} type="submit" disabled={imageProcessing} />
               </div>
             </div>
 
