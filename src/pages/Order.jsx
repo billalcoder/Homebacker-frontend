@@ -266,6 +266,13 @@ const Orders = () => {
                     <p><span className="font-semibold">Name:</span> {selectedOrder.userId.name}</p>
                     <p><span className="font-semibold">Phone:</span> {selectedOrder.userId.phone}</p>
                     <p><span className="font-semibold">Email:</span> {selectedOrder.userId.email}</p>
+                    <br />
+                    <p><span className="font-semibold">Area:</span> {selectedOrder.userId.address.area}</p>
+                    <p><span className="font-semibold">Building Name:</span> {selectedOrder.userId.address.buildingName}</p>
+                    <p><span className="font-semibold">flatNo:</span> {selectedOrder.userId.address.flatNo}</p>
+                    <p><span className="font-semibold">City:</span> {selectedOrder.userId.address.city}</p>
+                    <p><span className="font-semibold">State:</span> {selectedOrder.userId.address.state}</p>
+
                   </div>
                 </div>
               )}
