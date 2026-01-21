@@ -206,10 +206,10 @@ useEffect(() => {
             {/* Dynamic Input Based on Type */}
             <FormInput
               label={formData.unitType === "kg" ? "Weight (grams)" : "Quantity"}
-              type="number"
               name="unitValue"
               value={formData.unitValue}
               onChange={handleChange}
+              placeholder={"5kg 500g"}
               required
             />
 
