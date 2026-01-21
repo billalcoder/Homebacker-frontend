@@ -29,7 +29,7 @@ const OrderCard = ({ order, onClick }) => {
       
       <div className="flex justify-between items-end mt-3">
         <div>
-          <p className="text-sm text-stone-600">{order.items.length} Items</p>
+          <p className="text-sm text-stone-600">{order.items.length === 0 ? "Customize product" : `Item : ${order.items.length}`}</p>
           <p className="text-xs text-stone-400">Tap to view details</p>
         </div>
         <p className="text-lg font-bold text-amber-600">₹{order.totalAmount}</p>

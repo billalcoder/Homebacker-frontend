@@ -25,7 +25,7 @@ const Portfolio = lazy(() => import("./pages/PortfolioPage"));
 const ShopProfile = lazy(() => import("./pages/ShopPage"));
 const Order = lazy(() => import("./pages/Order"));
 const SubscribePage = lazy(() => import("./pages/RazorpaySubscriptionPage"));
-import { initNetworkLogger } from "./utils/networkLogger";
+
 
 
 const router = createBrowserRouter([
@@ -42,7 +42,6 @@ const router = createBrowserRouter([
       { path: "settings", element: <Settings /> },
       { path: "support", element: <Support /> },
       { path: "terms", element: <TermsAndConditions /> },
-      { path: "network", element: <Network /> },
       /* 🔥 DASHBOARD ROUTES */
       {
         path: "dashboard",
@@ -89,7 +88,7 @@ window.onunhandledrejection = function (event) {
     }),
   });
 };
-initNetworkLogger();
+// initNetworkLogger();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

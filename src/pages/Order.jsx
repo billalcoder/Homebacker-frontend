@@ -7,7 +7,7 @@ const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null); // For Modal
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [loadingList, setLoadingList] = useState(true);
-
+  const customization = selectedOrder?.customization
 
   const nextStatusMap = {
     pending: { label: "Accept Order", value: "preparing" },
@@ -231,30 +231,47 @@ const Orders = () => {
                   <div className="text-center py-4 text-stone-400">Loading details...</div>
                 ) : (
                   <div className="space-y-3">
-                    {selectedOrder.items && selectedOrder.items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center border-b border-stone-50 pb-2 last:border-0">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-stone-200 rounded-lg overflow-hidden flex-shrink-0">
-                            {/* Mock Image fallback since product might not have image populated in deep nesting */}
-                            <img
-                              src={item?.productId?.images[0]}
-                              alt="Product"
-                              className="w-full h-full object-cover"
-                            />
+                    {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                      selectedOrder.items.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="flex justify-between items-center border-b border-stone-50 pb-2 last:border-0"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-stone-200 rounded-lg overflow-hidden flex-shrink-0">
+                              <img
+                                src={item?.productId?.images?.[0]}
+                                alt="Product"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div>
+                              <p className="font-bold text-stone-700 text-sm">
+                                {typeof item.productId === "object" && item.productId?.productName
+                                  ? item.productId.productName
+                                  : "Product Name Loading..."}
+                              </p>
+                              <p className="text-xs text-stone-500">
+                                Qty : {item.quantity}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            {/* Check if productId is populated (object) or just an ID (string) */}
-                            <p className="font-bold text-stone-700 text-sm">
-                              {typeof item.productId === 'object' && item.productId?.productName
-                                ? item.productId.productName
-                                : "Product Name Loading..."}
-                            </p>
-                            <p className="text-xs text-stone-500">Qty: {item.quantity}</p>
-                          </div>
+                          <p className="font-semibold text-stone-700">₹{item.price}</p>
                         </div>
-                        <p className="font-semibold text-stone-700">₹{item.price}</p>
+                      ))
+                    ) : (
+                      // 👇 Fallback to customization when items are empty
+                      <div className="flex justify-between items-center border-b border-stone-50 pb-2">
+                        <div>
+                          <p className="font-bold text-stone-700 text-sm">Custom Order</p>
+                          <p className="text-xs text-stone-500">Flavor: {selectedOrder.customization?.flavor}</p>
+                          <p className="text-xs text-stone-500">Weight: {selectedOrder.customization?.weight}</p>
+                          <p className="text-xs text-stone-500">Theme: {selectedOrder.customization?.theme}</p>
+                        </div>
+                        <p className="font-semibold text-stone-700">₹{selectedOrder.totalAmount}</p>
                       </div>
-                    ))}
+                    )}
+
                   </div>
                 )}
               </div>
@@ -264,7 +281,7 @@ const Orders = () => {
                   <h4 className="font-bold text-stone-700 mb-2 text-sm uppercase">Customer</h4>
                   <div className="text-sm text-stone-600">
                     <p><span className="font-semibold">Name:</span> {selectedOrder.userId.name}</p>
-                    <p><span className="font-semibold">Phone:</span> {selectedOrder.userId.phone}</p>
+                    {/* <p><span className="font-semibold">Phone:</span> {selectedOrder.userId.phone}</p> */}
                     <p><span className="font-semibold">Email:</span> {selectedOrder.userId.email}</p>
                     <br />
                     <p><span className="font-semibold">Area:</span> {selectedOrder.userId.address.area}</p>

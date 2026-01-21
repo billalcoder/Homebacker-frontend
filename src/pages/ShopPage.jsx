@@ -752,7 +752,7 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
   const portfolioApi = useApi();
   useEffect(() => {
     if (newItem.unitType === "kg") {
-      setNewItem(prev => ({ ...prev, unitValue: "250" }));
+      setNewItem(prev => ({ ...prev, unitValue: "" }));
     } else {
       setNewItem(prev => ({ ...prev, unitValue: "1" }));
     }
@@ -925,20 +925,14 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
                   <label className="block text-stone-600 text-sm font-semibold mb-2">
                     Weight (grams)
                   </label>
-                  <select
+                  <input type='text'
                     value={newItem.unitValue}
+                    placeholder='eg 1kg 5kg 100g 500g'
                     onChange={e =>
                       setNewItem({ ...newItem, unitValue: e.target.value })
                     }
                     className="w-full px-4 py-3 rounded-lg border border-stone-300 bg-stone-50"
-                  >
-                    <option value="250">250 g</option>
-                    <option value="500">500 g</option>
-                    <option value="750">750 g</option>
-                    <option value="1000">1 kg</option>
-                    <option value="1500">1.5 kg</option>
-                    <option value="2000">2 kg</option>
-                  </select>
+                  />
                 </div>
               ) : (
                 <div>
@@ -1018,7 +1012,7 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
                 {/* Ensure we render price, defaulting to 0 if undefined */}
                 <p className="text-blue-600 font-bold mt-1">₹{item.price || "0"}</p>
               </div>
-              {console.log(item)}
+      
               {isEditMode && (
                 <button
                   onClick={() => onDelete(item._id)}

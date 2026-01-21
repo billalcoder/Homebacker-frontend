@@ -26,7 +26,7 @@ const ProductItem = ({ product, onEdit, onDelete }) => {
               {product.category}
             </span>
             <span className="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full font-medium">
-              {product.unitType === "kg" ? product.unitValue + "g" : product.unitValue + "per unit"}
+              {product.unitType === "kg" ? product.unitValue + "" : product.unitValue + "per unit"}
             </span>
           </div>
           <p className="text-amber-600 font-bold mt-1">₹{product.price}</p>
