@@ -13,7 +13,7 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
     category: "Cake",
     productDescription: "",
     unitType: "kg", // DEFAULT
-    unitValue: "250", // DEFAULT for kg
+    unitValue: "", // DEFAULT for kg
   });
 
   const [imageFile, setImageFile] = useState(null);
@@ -33,36 +33,36 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
 
 
   // Reset or Pre-fill form when modal opens
-useEffect(() => {
-  if (initialData) {
-    setFormData({
-      productName: initialData.productName,
-      price: initialData.price,
-      category: initialData.category,
-      productDescription: initialData.productDescription || "",
-      unitType: initialData.unitType,
-      unitValue: initialData.unitValue,
-    });
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        productName: initialData.productName,
+        price: initialData.price,
+        category: initialData.category,
+        productDescription: initialData.productDescription || "",
+        unitType: initialData.unitType,
+        unitValue: initialData.unitValue,
+      });
 
-    if (initialData.images && initialData.images.length > 0) {
-      setPreviewUrl(initialData.images[0]); // server image
-      setIsObjectUrl(false); // ✅ IMPORTANT
+      if (initialData.images && initialData.images.length > 0) {
+        setPreviewUrl(initialData.images[0]); // server image
+        setIsObjectUrl(false); // ✅ IMPORTANT
+      }
+    } else {
+      setFormData({
+        productName: "",
+        price: "",
+        category: "Cake",
+        productDescription: "",
+        unitType: "kg",
+        unitValue: "",
+      });
+
+      setImageFile(null);
+      setPreviewUrl("");
+      setIsObjectUrl(false); // ✅ reset safely
     }
-  } else {
-    setFormData({
-      productName: "",
-      price: "",
-      category: "Cake",
-      productDescription: "",
-      unitType: "kg",
-      unitValue: "250",
-    });
-
-    setImageFile(null);
-    setPreviewUrl("");
-    setIsObjectUrl(false); // ✅ reset safely
-  }
-}, [initialData, isOpen]);
+  }, [initialData, isOpen]);
 
 
   const handleChange = (e) => {

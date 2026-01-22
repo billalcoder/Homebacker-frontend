@@ -482,8 +482,9 @@ const ShopHeader = ({ isEditMode, toggleEdit, onSave, isSaving }) => {
           ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}
         `}
         >
-          <span className="sm:hidden">
+          <span className="sm:hidden flex flex-col items-center text-[10px]">
             {isEditMode ? <X size={18} /> : <LayoutGrid size={18} />}
+            <span>{isEditMode ? 'Cancel' : 'Edit'}</span>
           </span>
           <span className="hidden sm:inline">
             {isEditMode ? 'Cancel Edit' : 'Edit Profile'}
@@ -688,51 +689,7 @@ const ShopDetails = ({ isEditMode, data, onChange }) => (
     </div>
 
     {/* Right Column: Contact Card */}
-    <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 h-fit space-y-6">
-      <h3 className="font-bold text-gray-900 border-b pb-3 text-lg">Contact Info</h3>
-
-      {/* Location */}
-      <div className="space-y-3">
-        <div className="flex gap-3 text-gray-600">
-          <MapPin size={20} className="shrink-0 text-blue-500 mt-0.5" />
-          {isEditMode ? (
-            <div className="space-y-3 w-full">
-              <input name="address" value={data.address} onChange={onChange} placeholder="Street Address" className="w-full border-b border-gray-200 pb-1 text-sm outline-none focus:border-blue-500" />
-              <div className="flex gap-2">
-                <input name="city" value={data.city} onChange={onChange} placeholder="City" className="w-1/2 border-b border-gray-200 pb-1 text-sm outline-none focus:border-blue-500" />
-                <input name="pincode" value={data.pincode} onChange={onChange} placeholder="Pin" className="w-1/2 border-b border-gray-200 pb-1 text-sm outline-none focus:border-blue-500" />
-              </div>
-            </div>
-          ) : (
-            <span className="text-sm leading-relaxed">{data.address || "No Address"}, <br />{data.city} {data.pincode}</span>
-          )}
-        </div>
-      </div>
-
-      {/* Socials */}
-      <div className="space-y-4">
-        {[
-          { icon: Instagram, color: "text-pink-600", name: "socialLinks.instagram", val: data.socialLinks.instagram, label: "Instagram" },
-          { icon: Phone, color: "text-green-600", name: "socialLinks.whatsapp", val: data.socialLinks.whatsapp, label: "WhatsApp" },
-          { icon: Globe, color: "text-gray-600", name: "socialLinks.website", val: data.socialLinks.website, label: "Website" }
-        ].map((social, idx) => (
-          <div key={idx} className="flex items-center gap-3">
-            <social.icon size={20} className={`${social.color} shrink-0`} />
-            {isEditMode ? (
-              <input name={social.name} value={social.val} onChange={onChange} placeholder={`${social.label} URL/Num`} className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-200" />
-            ) : (
-              social.val ? (
-                <a href={social.val} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline hover:text-blue-800 truncate font-medium">
-                  {social.val}
-                </a>
-              ) : (
-                <span className="text-sm text-gray-400 italic">Not connected</span>
-              )
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
+  
   </div>
 );
 
