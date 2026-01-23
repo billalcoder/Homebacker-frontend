@@ -37,10 +37,9 @@ const router = createBrowserRouter([
     // ErrorBoundary: <ErrorBoundary />,
     errorElement: <ErrorBoundary />,
     children: [
-      { index: true, element: <Navigate to="/home" replace /> },
+      { index: true, element: <HomePage /> },
 
       { path: "register", element: <Register /> },
-      { path: "home", element: <HomePage /> },
       { path: "login", element: <Login /> },
       { path: "settings", element: <Settings /> },
       { path: "support", element: <Support /> },
