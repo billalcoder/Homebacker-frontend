@@ -11,7 +11,7 @@ import "./index.css";
 import ErrorBoundary from "./ErrorBoundary";
 import Network from "./pages/Network";
 import About from "./pages/About";
-import HomePage from "./pages/homepage";
+import HomePage from "./pages/Homepage";
 
 /* 🔥 Lazy-loaded Pages */
 const Register = lazy(() => import("./pages/Register"));
