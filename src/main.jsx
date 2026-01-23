@@ -11,6 +11,7 @@ import "./index.css";
 import ErrorBoundary from "./ErrorBoundary";
 import Network from "./pages/Network";
 import About from "./pages/About";
+import HomePage from "./pages/homepage";
 
 /* 🔥 Lazy-loaded Pages */
 const Register = lazy(() => import("./pages/Register"));
@@ -36,9 +37,10 @@ const router = createBrowserRouter([
     // ErrorBoundary: <ErrorBoundary />,
     errorElement: <ErrorBoundary />,
     children: [
-      { index: true, element: <Navigate to="/login" replace /> },
+      { index: true, element: <Navigate to="/home" replace /> },
 
       { path: "register", element: <Register /> },
+      { path: "home", element: <HomePage /> },
       { path: "login", element: <Login /> },
       { path: "settings", element: <Settings /> },
       { path: "support", element: <Support /> },
