@@ -109,6 +109,9 @@ const Login = () => {
         <div className="bg-amber-600 p-8 text-center">
           <h2 className="text-3xl font-bold text-white tracking-wide">Welcome Back</h2>
           <p className="text-amber-100 mt-2">Sign in to your account</p>
+          <p className="text-amber-100 mt-3 text-sm">
+            BakerLane.shop is a platform for home bakers to receive direct customer orders.
+          </p>
         </div>
 
         {/* Form Area */}
@@ -169,6 +172,12 @@ const Login = () => {
                 Create Account
               </Link>
             </p>
+            <Link
+              to="/about"
+              className="block text-center mt-4 text-sm text-stone-400 hover:text-amber-600 underline"
+            >
+              Learn more about BakerLane.shop
+            </Link>
           </div>
         </div>
       </div>

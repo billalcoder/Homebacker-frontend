@@ -10,6 +10,7 @@ import App from "./App";
 import "./index.css";
 import ErrorBoundary from "./ErrorBoundary";
 import Network from "./pages/Network";
+import About from "./pages/About";
 
 /* 🔥 Lazy-loaded Pages */
 const Register = lazy(() => import("./pages/Register"));
@@ -41,6 +42,7 @@ const router = createBrowserRouter([
       { path: "login", element: <Login /> },
       { path: "settings", element: <Settings /> },
       { path: "support", element: <Support /> },
+      { path: "about", element: <About /> },
       { path: "terms", element: <TermsAndConditions /> },
       /* 🔥 DASHBOARD ROUTES */
       {

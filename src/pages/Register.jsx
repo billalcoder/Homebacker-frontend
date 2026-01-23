@@ -144,6 +144,9 @@ const Register = () => {
             <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-stone-200">
 
                 {/* Header */}
+                <p className="text-amber-100 mt-3 text-sm">
+                    BakerLane.shop is a platform for home bakers to receive direct customer orders.
+                </p>
                 <div className="bg-amber-600 p-8 text-center">
                     <h2 className="text-3xl font-bold text-white tracking-wide">
                         {step === 'register' ? 'Join Us' : 'Verify Account'}
@@ -283,9 +286,16 @@ const Register = () => {
                                     Log In
                                 </Link>
                             </p>
+                            <Link
+                                to="/about"
+                                className="block text-center mt-4 text-sm text-stone-400 hover:text-amber-600 underline"
+                            >
+                                Learn more about BakerLane.shop
+                            </Link>
                         </div>
                     )}
                 </div>
+
             </div>
         </div>
     );
