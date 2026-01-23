@@ -143,7 +143,7 @@ const About = () => {
               How do customers contact me?
             </h4>
             <p className="text-sm mt-1">
-              one's you accept the order of Customer. then they will get the your number and they can connent with you. 
+              one's you accept the order of Customer. then they will get the your number and they can connent with you.
             </p>
           </div>
 
@@ -215,6 +215,27 @@ const About = () => {
           Create Free Account
         </Link>
       </div>
+      {/* Support */}
+      <section id="support" className="mb-12 scroll-mt-24">
+        <h2 className="text-xl font-semibold mb-2">🛠 Support</h2>
+        <p className="text-gray-700 leading-relaxed mb-2">
+          For any assistance or questions, you can reach our support team anytime.
+        </p>
+        <p className="text-gray-700 leading-relaxed">
+          Visit our <Link to="/support" className="text-amber-600 hover:underline">Support Page</Link> for FAQs, contact forms, and more.
+        </p>
+      </section>
+
+      {/* Terms */}
+      <section id="terms" className="mb-12 scroll-mt-24">
+        <h2 className="text-xl font-semibold mb-2">📄 Terms & Conditions</h2>
+        <p className="text-gray-700 leading-relaxed mb-2">
+          By using BakerLane.shop, you agree to our Terms & Conditions.
+        </p>
+        <p className="text-gray-700 leading-relaxed">
+          Read the full terms on our <Link to="/terms" className="text-amber-600 hover:underline">Terms & Conditions Page</Link>.
+        </p>
+      </section>
 
     </div>
   );

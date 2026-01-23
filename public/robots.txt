@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Block private dashboard pages
+Disallow: /dashboard
+Disallow: /login
+Disallow: /settings
+
+Sitemap: https://bakerlane.shop/sitemap.xml

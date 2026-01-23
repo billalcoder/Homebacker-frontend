@@ -68,14 +68,6 @@ const Support = () => {
 
             <div className="text-sm text-stone-600 space-y-1">
 
-              {/* Phone */}
-              <a
-                href="tel:7420864014"
-                className="block hover:text-amber-700 transition-colors"
-              >
-                📞 7420864014
-              </a>
-
               {/* Email */}
               <a
                 href="mailto:billalshekhani10@gmail.com"
