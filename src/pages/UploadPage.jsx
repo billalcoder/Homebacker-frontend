@@ -11,119 +11,119 @@ const UploadProduct = () => {
   const [editingProduct, setEditingProduct] = useState(null); // Holds product being edited
   const productApi = useApi();        // GET / DELETE
   const productMutateApi = useApi(); // POST / PUT
-const loading = productApi.loading;
+  const loading = productApi.loading;
   // --- API Functions ---
 
-const fetchProducts = async () => {
-  try {
-    const data = await productApi.request({
-      url: `${import.meta.env.VITE_BASEURL}/client/getproduct`,
-      retry: 1,
-    });
+  const fetchProducts = async () => {
+    try {
+      const data = await productApi.request({
+        url: `${import.meta.env.VITE_BASEURL}/client/getproduct`,
+        retry: 1,
+      });
 
-    if (!data) return; // aborted safely
+      if (!data) return; // aborted safely
 
-    const productList = data.data || (Array.isArray(data) ? data : []);
-    setProducts(productList);
+      const productList = data.data || (Array.isArray(data) ? data : []);
+      setProducts(productList);
 
-  } catch (error) {
-    if (error.name === "AbortError") return;
+    } catch (error) {
+      if (error.name === "AbortError") return;
 
-    fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: error.message,
-        stack: error.stack,
-        api: "/client/getproduct",
-        route: window.location.pathname,
-        source: "product",
-        userAgent: navigator.userAgent,
-      }),
-    });
-  }
-};
+      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error.message,
+          stack: error.stack,
+          api: "/client/getproduct",
+          route: window.location.pathname,
+          source: "product",
+          userAgent: navigator.userAgent,
+        }),
+      });
+    }
+  };
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
-const handleCreate = async (formData) => {
-  if (productMutateApi.loading) return;
+  const handleCreate = async (formData) => {
+    if (productMutateApi.loading) return;
 
-  try {
-    const res = await productMutateApi.request({
-      url: `${import.meta.env.VITE_BASEURL}/client/product`,
-      method: "POST",
-      body: formData,
-      retry: 1,
-    });
+    try {
+      const res = await productMutateApi.request({
+        url: `${import.meta.env.VITE_BASEURL}/client/product`,
+        method: "POST",
+        body: formData,
+        retry: 1,
+      });
 
-    // 🚪 Close modal FIRST (UI response)
-    setIsModalOpen(false);
-
-    // 🔄 Clear edit state if any
-    setEditingProduct(null);
-
-    // ⏳ Small delay avoids mobile race conditions
-    await new Promise(r => setTimeout(r, 300));
-
-    // 🔁 Always refresh products
-    await fetchProducts();
-
-  } catch (error) {
-    if (error.name === "AbortError") return;
-    alert("Something went wrong. Please try again.");
-  }
-};
-
-
-const handleUpdate = async (formData) => {
-  if (!editingProduct || productMutateApi.loading) return;
-
-  try {
-    const res = await productMutateApi.request({
-      url: `${import.meta.env.VITE_BASEURL}/client/product/${editingProduct._id}`,
-      method: "PUT",
-      body: formData,
-      retry: 1,
-    });
-
-    if (res?.success) {
+      // 🚪 Close modal FIRST (UI response)
       setIsModalOpen(false);
+
+      // 🔄 Clear edit state if any
       setEditingProduct(null);
+
+      // ⏳ Small delay avoids mobile race conditions
       await new Promise(r => setTimeout(r, 300));
+
+      // 🔁 Always refresh products
       await fetchProducts();
-    } else {
-      alert(res?.message || "Failed to update product");
+
+    } catch (error) {
+      if (error.name === "AbortError") return;
+      alert(error.message);
     }
-
-  } catch (error) {
-    if (error.name === "AbortError") return;
-    alert("Something went wrong. Please try again.");
-  }
-};
+  };
 
 
-const handleDelete = async (id) => {
-  if (!window.confirm("Are you sure you want to delete this product?")) return;
-  if (productApi.loading) return;
+  const handleUpdate = async (formData) => {
+    if (!editingProduct || productMutateApi.loading) return;
 
-  // Optimistic UI
-  setProducts(prev => prev.filter(p => p._id !== id));
+    try {
+      const res = await productMutateApi.request({
+        url: `${import.meta.env.VITE_BASEURL}/client/product/${editingProduct._id}`,
+        method: "PUT",
+        body: formData,
+        retry: 1,
+      });
 
-  try {
-    await productApi.request({
-      url: `${import.meta.env.VITE_BASEURL}/client/product/${id}`,
-      method: "DELETE",
-      retry: 1,
-    });
-  } catch (error) {
-    if (error.name === "AbortError") return;
-    alert("Delete failed. Refreshing...");
-    fetchProducts();
-  }
-};
+      if (res?.success) {
+        setIsModalOpen(false);
+        setEditingProduct(null);
+        await new Promise(r => setTimeout(r, 300));
+        await fetchProducts();
+      } else {
+        alert(res?.message || "Failed to update product");
+      }
+
+    } catch (error) {
+      if (error.name === "AbortError") return;
+      alert("Something went wrong. Please try again.");
+    }
+  };
+
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    if (productApi.loading) return;
+
+    // Optimistic UI
+    setProducts(prev => prev.filter(p => p._id !== id));
+
+    try {
+      await productApi.request({
+        url: `${import.meta.env.VITE_BASEURL}/client/product/${id}`,
+        method: "DELETE",
+        retry: 1,
+      });
+    } catch (error) {
+      if (error.name === "AbortError") return;
+      alert("Delete failed. Refreshing...");
+      fetchProducts();
+    }
+  };
 
 
   // --- Event Handlers ---
@@ -171,7 +171,7 @@ const handleDelete = async (id) => {
           <h3 className="text-xl font-bold text-stone-700 mb-2">No Products Yet</h3>
           <p className="text-stone-500 mb-6 max-w-xs mx-auto">Start building your menu by adding your first delicious item.</p>
           <div className="w-48 mx-auto">
-            <Button text="Upload First Product" onClick={openAddModal} disabled={productMutateApi.loading}/>
+            <Button text="Upload First Product" onClick={openAddModal} disabled={productMutateApi.loading} />
           </div>
         </div>
 

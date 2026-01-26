@@ -20,7 +20,6 @@ export default function SubscribePage() {
       });
 
       const data = await res.json();
-      console.log("Subscription Created:", data);
 
       if (data.subscription_id) {
         setSubscriptionId(data.subscription_id);

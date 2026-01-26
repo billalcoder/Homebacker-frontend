@@ -649,7 +649,7 @@ const ShopDetails = ({ isEditMode, data, onChange }) => (
           <div>
             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Shop Name</label>
             <input
-              name="shopName" value={data.shopName || "shopname"} onChange={onChange}
+              name="shopName" value={data.shopName} onChange={onChange}
               placeholder="Enter Shop Name"
               className="w-full text-4xl font-extrabold text-gray-900 border-b-2 border-blue-100 focus:border-blue-600 outline-none pb-2 bg-transparent placeholder-gray-300 transition-colors"
             />

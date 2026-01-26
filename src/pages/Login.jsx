@@ -65,8 +65,8 @@ const Login = () => {
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed. Check your credentials.');
+      if (!response.ok) { 
+        throw new Error(data.details || data.error || 'Login failed. Check your credentials.');
       }
 
       // LOGIN SUCCESSFUL

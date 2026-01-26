@@ -12,7 +12,7 @@ export default function useApi() {
     method = "GET",
     body = null,
     headers = {},
-    credentials = "include", 
+    credentials = "include",
     retry = 0,
   }) => {
     if (inFlightRef.current) return null;
@@ -37,17 +37,25 @@ export default function useApi() {
         signal: controller.signal,
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
       }
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          data?.error ||
+          data?.details ||
+          "Something went wrong"
+        );
+      }
+
       return data;
 
     } catch (err) {
-      if (err.name === "AbortError") {
-        return null;
-      }
+      if (err.name === "AbortError") return null;
 
       if (retry > 0) {
         await new Promise(r => setTimeout(r, 300));
