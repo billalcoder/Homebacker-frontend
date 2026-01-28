@@ -23,7 +23,7 @@ const RazorpaySubscription = ({ subscriptionId, user }) => {
     }
 
     const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Razorpay Key ID
+      key: 'rzp_live_S8oVAvrnodF632', // Razorpay Key ID
       subscription_id: subscriptionId,           // <-- Subscription ID here
       name: "Home Baker",
       description: "Subscription Payment",
