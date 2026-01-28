@@ -20,7 +20,9 @@ export default function SubscribePage() {
       });
 
       const data = await res.json();
-
+      if(data.success === false){
+        return alert(data.message)
+      }
       if (data.subscription_id) {
         setSubscriptionId(data.subscription_id);
       } else {
