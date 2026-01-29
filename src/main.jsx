@@ -3,23 +3,22 @@ import ReactDOM from "react-dom/client";
 import {
   createBrowserRouter,
   RouterProvider,
-  Navigate,
 } from "react-router-dom";
 
 import App from "./App";
 import "./index.css";
 import ErrorBoundary from "./ErrorBoundary";
-import Network from "./pages/Network";
 import About from "./pages/About";
 import HomePage from "./pages/Homepage";
 
-/* 🔥 Lazy-loaded Pages */
+/* 🔥 Lazy-loaded Pages (Auth & Utility) */
 const Register = lazy(() => import("./pages/Register"));
 const Login = lazy(() => import("./pages/Login"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Support = lazy(() => import("./pages/Support"));
-const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"))
-/* 🔥 Dashboard Layout + Pages */
+const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
+
+/* 🔥 Dashboard Layout + Pages (Client/Shop Owner) */
 const DashboardLayout = lazy(() => import("./layout/DashboardLayout"));
 const DashboardHome = lazy(() => import("./pages/Dashboard"));
 const UploadProduct = lazy(() => import("./pages/UploadPage"));
@@ -28,24 +27,28 @@ const ShopProfile = lazy(() => import("./pages/ShopPage"));
 const Order = lazy(() => import("./pages/Order"));
 const SubscribePage = lazy(() => import("./pages/RazorpaySubscriptionPage"));
 
-
+/* 🔥 Admin Layout + Pages (Super Admin) */
+const AdminLayout = lazy(() => import("./layout/AdminLayout"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminClients = lazy(() => import("./pages/admin/AdminClients"));
+const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
-    // ErrorBoundary: <ErrorBoundary />,
     errorElement: <ErrorBoundary />,
     children: [
+      /* 🌍 Public Routes */
       { index: true, element: <HomePage /> },
-
       { path: "register", element: <Register /> },
       { path: "login", element: <Login /> },
       { path: "settings", element: <Settings /> },
       { path: "support", element: <Support /> },
       { path: "about", element: <About /> },
       { path: "terms", element: <TermsAndConditions /> },
-      /* 🔥 DASHBOARD ROUTES */
+      
+      /* 🏪 Dashboard Routes (Protected by User Session) */
       {
         path: "dashboard",
         element: <DashboardLayout />,
@@ -58,10 +61,23 @@ const router = createBrowserRouter([
           { path: "plan", element: <SubscribePage /> },
         ],
       },
+
+      /* 🛡️ Admin Routes (Protected by Admin Role) */
+      {
+        path: "admin",
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <AdminUsers /> }, // Default view
+          { path: "users", element: <AdminUsers /> },
+          { path: "clients", element: <AdminClients /> },
+          { path: "products", element: <AdminProducts /> },
+        ]
+      }
     ],
   },
 ]);
 
+// --- Global Error Logging ---
 window.onerror = function (message, source, lineno, colno, error) {
   fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
     method: "POST",
@@ -91,12 +107,11 @@ window.onunhandledrejection = function (event) {
     }),
   });
 };
-// initNetworkLogger();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <Suspense fallback={<div className="p-10 text-center">Loading...</div>}>
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-stone-500">Loading App...</div>}>
         <RouterProvider router={router} />
       </Suspense>
     </ErrorBoundary>
