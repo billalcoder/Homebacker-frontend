@@ -6,6 +6,7 @@ import useApi from "../hooks/useApi";
 
 const UploadProduct = () => {
   const [products, setProducts] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1 });
   // const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null); // Holds product being edited
@@ -14,39 +15,31 @@ const UploadProduct = () => {
   const loading = productApi.loading;
   // --- API Functions ---
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (page = 1) => {
     try {
       const data = await productApi.request({
-        url: `${import.meta.env.VITE_BASEURL}/client/getproduct`,
+        url: `${import.meta.env.VITE_BASEURL}/client/getproduct?page=${page}&limit=12`,
         retry: 1,
       });
 
-      if (!data) return; // aborted safely
+      if (!data) return;
 
-      const productList = data.data || (Array.isArray(data) ? data : []);
-      setProducts(productList);
-
+      setProducts(data.data || []);
+      setPagination(data.pagination || { page: 1, totalPages: 1 });
     } catch (error) {
-      if (error.name === "AbortError") return;
-
-      fetch(`${import.meta.env.VITE_BASEURL}/log/frontend`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: error.message,
-          stack: error.stack,
-          api: "/client/getproduct",
-          route: window.location.pathname,
-          source: "product",
-          userAgent: navigator.userAgent,
-        }),
-      });
+      console.error("Fetch error", error);
     }
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    fetchProducts(pagination.page);
+  }, [pagination.page]); // Refetch when page changes
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPagination(prev => ({ ...prev, page: newPage }));
+    }
+  };
 
   const handleCreate = async (formData) => {
     if (productMutateApi.loading) return;
@@ -176,18 +169,43 @@ const UploadProduct = () => {
         </div>
 
       ) : (
-
         // POPULATED STATE: Grid List
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-20 animate-fade-in">
-          {products.map(product => (
-            <ProductItem
-              key={product._id}
-              product={product}
-              onEdit={openEditModal}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-20 animate-fade-in">
+            {products.map(product => (
+              <ProductItem
+                key={product._id}
+                product={product}
+                onEdit={openEditModal}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+
+          {products.length > 0 && (
+            <div className="flex justify-center items-center gap-4 mt-10 pb-10">
+              <button
+                disabled={pagination.page === 1}
+                onClick={() => handlePageChange(pagination.page - 1)}
+                className="px-4 py-2 bg-stone-200 rounded-lg disabled:opacity-50"
+              >
+                Previous
+              </button>
+
+              <span className="text-stone-600 font-medium">
+                Page {pagination.page} of {pagination.totalPages}
+              </span>
+
+              <button
+                disabled={pagination.page === pagination.totalPages}
+                onClick={() => handlePageChange(pagination.page + 1)}
+                className="px-4 py-2 bg-stone-200 rounded-lg disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {/* 3. The Modal (Handles both Add and Edit) */}

@@ -1,19 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { Trash2, Search, CheckCircle, Store, Package, AlertCircle } from 'lucide-react';
+import { Trash2, Search, CheckCircle, Store, Package, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const AdminClients = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Pagination & Search State
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalDocs, setTotalDocs] = useState(0);
 
   const fetchClients = async () => {
+    setLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_BASEURL}/admin/clients`, {
+      const res = await fetch(`${import.meta.env.VITE_BASEURL}/admin/clients?page=${page}&limit=10&search=${search}`, {
         credentials: "include"
       });
       if (res.ok) {
-        const data = await res.json();
-        setClients(data);
+        const result = await res.json();
+        // Handle response structure { data: [...], pagination: {...} }
+        setClients(result.data || []);
+        if (result.pagination) {
+            setTotalPages(result.pagination.totalPages);
+            setTotalDocs(result.pagination.total);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -22,9 +33,18 @@ const AdminClients = () => {
     }
   };
 
+  // Debounce Search & Fetch on page change
   useEffect(() => {
-    fetchClients();
-  }, []);
+    const timer = setTimeout(() => {
+        fetchClients();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [page, search]);
+
+  const handleSearchChange = (e) => {
+      setSearch(e.target.value);
+      setPage(1); // Reset to page 1 on search
+  };
 
   const handleVerify = async (id) => {
     try {
@@ -32,9 +52,7 @@ const AdminClients = () => {
         method: "PATCH",
         credentials: "include"
       });
-      if (res.ok) {
-        setClients(clients.map(c => c._id === id ? { ...c, isVerified: true } : c));
-      }
+      if (res.ok) fetchClients();
     } catch (err) {
       alert("Verification failed");
     }
@@ -47,17 +65,14 @@ const AdminClients = () => {
         method: "DELETE",
         credentials: "include"
       });
-      if (res.ok) {
-        setClients(clients.filter(c => c._id !== id));
-      }
+      if (res.ok) fetchClients();
     } catch (err) {
       alert("Failed to delete client");
     }
   };
 
-  // 🔥 UPDATED: Completeness Logic based ONLY on Shop Details
+  // Completeness Logic based ONLY on 4 Shop Details fields
   const getCompleteness = (client) => {
-    // 1. Define the 4 fields you care about
     const fields = [
       client.shopName,
       client.shopDescription,
@@ -65,34 +80,22 @@ const AdminClients = () => {
       client.coverImage
     ];
 
-    // 2. Count filled fields
     const filled = fields.filter(val => {
-        // Check if value exists and is not an empty string
         if (!val || val.trim() === "") return false;
-        
-        // Check if it's just the default placeholder image
         if (val === "https://placehold.co/400") return false;
-        
         return true;
     }).length;
 
-    // 3. Calculate % (4 fields total)
     return Math.round((filled / 4) * 100);
   };
 
-  const filteredClients = clients.filter(c => 
-    c.name?.toLowerCase().includes(search.toLowerCase()) || 
-    c.email?.toLowerCase().includes(search.toLowerCase()) ||
-    c.shopName?.toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in pb-10">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-stone-800">Shops & Clients</h1>
-          <p className="text-stone-500">Monitor shop performance and completeness</p>
+          <p className="text-stone-500">Total Clients: {totalDocs}</p>
         </div>
         <div className="bg-white px-4 py-2 rounded-lg border border-stone-200 flex items-center gap-2 shadow-sm">
           <Search size={18} className="text-stone-400" />
@@ -100,19 +103,19 @@ const AdminClients = () => {
             className="outline-none text-sm w-64"
             placeholder="Search by name, shop, or email..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
           />
         </div>
       </div>
 
       {/* Table Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden mb-4">
         <table className="w-full text-left">
           <thead className="bg-stone-50 border-b border-stone-200 text-xs uppercase text-stone-500 font-bold">
             <tr>
               <th className="px-6 py-4">Shop Details</th>
               <th className="px-6 py-4">Contact</th>
-              <th className="px-6 py-4 text-center">Shop Profile</th>
+              <th className="px-6 py-4 text-center">Completeness</th>
               <th className="px-6 py-4 text-center">Products</th>
               <th className="px-6 py-4 text-center">Status</th>
               <th className="px-6 py-4 text-right">Actions</th>
@@ -121,12 +124,12 @@ const AdminClients = () => {
           <tbody className="divide-y divide-stone-100">
             {loading ? (
                <tr><td colSpan="6" className="p-12 text-center text-stone-400 font-medium">Loading Clients...</td></tr>
-            ) : filteredClients.length === 0 ? (
+            ) : clients.length === 0 ? (
                <tr><td colSpan="6" className="p-12 text-center text-stone-400 font-medium">No clients found matching your search.</td></tr>
             ) : (
-              filteredClients.map(client => {
+              clients.map(client => {
                 const completeness = getCompleteness(client);
-                const isLowProfile = completeness < 100; // Require 100% since it's only 4 fields
+                const isLowProfile = completeness < 100;
 
                 return (
                   <tr key={client._id} className="hover:bg-stone-50 transition-colors group">
@@ -134,7 +137,7 @@ const AdminClients = () => {
                     {/* 1. Shop Info */}
                     <td className="px-6 py-4 flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                        {client.profileImage && client.coverImage !== "https://placehold.co/400" ? (
+                        {client.profileImage && client.profileImage !== "https://placehold.co/400" ? (
                             <img src={client.profileImage} alt="" className="w-full h-full object-cover" />
                         ) : (
                             <Store size={18} className="text-stone-400" />
@@ -213,6 +216,27 @@ const AdminClients = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-between items-center px-4">
+          <span className="text-sm text-stone-500">Page {page} of {totalPages}</span>
+          <div className="flex gap-2">
+              <button 
+                disabled={page === 1} 
+                onClick={() => setPage(p => p - 1)}
+                className="px-3 py-1 border border-stone-200 rounded-lg disabled:opacity-50 flex items-center bg-white hover:bg-stone-50 transition-colors"
+              >
+                <ChevronLeft size={16} /> Prev
+              </button>
+              <button 
+                disabled={page === totalPages || totalPages === 0} 
+                onClick={() => setPage(p => p + 1)}
+                className="px-3 py-1 border border-stone-200 rounded-lg disabled:opacity-50 flex items-center bg-white hover:bg-stone-50 transition-colors"
+              >
+                Next <ChevronRight size={16} />
+              </button>
+          </div>
       </div>
     </div>
   );
