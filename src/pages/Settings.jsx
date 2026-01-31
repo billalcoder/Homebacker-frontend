@@ -41,7 +41,6 @@ const Settings = () => {
 
     async function handleUpdateApi() {
         if (security.currentPassword === '') {
-            console.log(security);
             return alert("Password should not empty")
         }
         if (security.newPassword === '') {

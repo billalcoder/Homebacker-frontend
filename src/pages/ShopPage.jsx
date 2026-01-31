@@ -576,7 +576,6 @@ const ShopHero = ({ isEditMode, coverPreview, profilePreview, onImageSelect, por
             key={item._id}
             className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100' : 'opacity-0'}`}
           >
-            {console.log(item)}
             {/* Background Image with Gradient */}
             <img src={item.images} alt={item.title} className="w-full h-full object-cover opacity-60" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
@@ -641,7 +640,6 @@ const ProfilePicOverlay = ({ preview, isEditMode, onImageSelect }) => (
 // ==========================================
 const ShopDetails = ({ isEditMode, data, onChange }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-10 pt-4">
-    {console.log(data)}
     {/* Left Column: Details */}
     <div className="md:col-span-2 space-y-6">
       {isEditMode ? (
@@ -744,16 +742,6 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
     // You mentioned your backend route uses 'portfolioImages'
     formData.append('portfolioImages', compressedImage);
 
-
-    // Debug: Check console to see what is being sent
-    console.log("Submitting Portfolio Item:", {
-      title: newItem.title,
-      price: newItem.price,
-      image: newItem.image?.name || "no-file",
-      category: newItem.category,
-      unitType: newItem.unitType,
-      unitValue: newItem.unitValue
-    });
 
     let success = false;
 

@@ -27,10 +27,6 @@ const RazorpaySubscription = ({ subscriptionId, user }) => {
       subscription_id: subscriptionId,           // <-- Subscription ID here
       name: "Home Baker",
       description: "Subscription Payment",
-      prefill: {
-        name: user?.name,
-        email: user?.email,
-      },
       theme: { color: "#3399cc" },
     };
 
