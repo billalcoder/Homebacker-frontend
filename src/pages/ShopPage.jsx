@@ -721,54 +721,42 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
     };
   }, [previewUrl]);
 
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newItem.image || !newItem.title || !newItem.price) return alert("All fields required");
 
     setLoading(true);
 
-    const compressedImage = await compressImage(newItem.image);
-    if (!compressedImage) {
-      setLoading(false);
-      return alert("Image compression failed. Please try a smaller image.");
-    }
-    const formData = new FormData();
-
-    // 1. Append Text Fields FIRST (Critical for Multer/Backend parsing)
-    formData.append('title', newItem.title);
-    formData.append('price', newItem.price);
-    formData.append('category', newItem.category);
-    formData.append('unitType', newItem.unitType);
-    formData.append('unitValue', newItem.unitValue);
-
-    // 2. Append File LAST
-    // Ensure this key matches your backend: upload.single('portfolioImages') vs 'image'
-    // You mentioned your backend route uses 'portfolioImages'
-    formData.append('portfolioImages', compressedImage);
-
-
-    let success = false;
-
     try {
-      success = await onAdd(formData);
+      // 1. Check if compression works
+      const compressedImage = await compressImage(newItem.image);
+      if (!compressedImage) throw new Error("Image compression failed");
+
+      const formData = new FormData();
+      formData.append('title', newItem.title);
+      formData.append('price', newItem.price);
+      formData.append('category', newItem.category);
+      formData.append('unitType', newItem.unitType);
+      formData.append('unitValue', newItem.unitValue);
+      formData.append('portfolioImages', compressedImage);
+
+      // 2. Run the add function
+      const success = await onAdd(formData);
+
+      if (success) {
+        setIsAdding(false);
+        setNewItem(DEFAULT_ITEM);
+      } else {
+        // If success is false, it means backend returned false/error without throwing
+        alert("Server rejected the item. Likely file size too big.");
+      }
+
+    } catch (err) {
+      // 3. THIS ALERT will tell you the real reason on mobile
+      console.error(err);
+      alert(`Error: ${err.message || "Unknown network error"}`);
     } finally {
       setLoading(false);
-    }
-
-    const DEFAULT_ITEM = {
-      title: '',
-      price: '',
-      image: null,
-      category: "Cake",
-      unitType: "kg",
-      unitValue: "250"
-    };
-
-    if (success) {
-      setIsAdding(false);
-      setNewItem(DEFAULT_ITEM);
-    } else {
-      alert("Failed to add item. Check console.");
     }
   };
 
