@@ -687,7 +687,7 @@ const ShopDetails = ({ isEditMode, data, onChange }) => (
     </div>
 
     {/* Right Column: Contact Card */}
-  
+
   </div>
 );
 
@@ -728,6 +728,10 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
     setLoading(true);
 
     const compressedImage = await compressImage(newItem.image);
+    if (!compressedImage) {
+      setLoading(false);
+      return alert("Image compression failed. Please try a smaller image.");
+    }
     const formData = new FormData();
 
     // 1. Append Text Fields FIRST (Critical for Multer/Backend parsing)
@@ -957,7 +961,7 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
                 {/* Ensure we render price, defaulting to 0 if undefined */}
                 <p className="text-blue-600 font-bold mt-1">₹{item.price || "0"}</p>
               </div>
-      
+
               {isEditMode && (
                 <button
                   onClick={() => onDelete(item._id)}
