@@ -323,24 +323,37 @@ const ShopProfile = () => {
     if (portfolioApi.loading) return false;
 
     try {
-      const res = await portfolioApi.request({
-        url: `${API_BASE}/portfolio`,
-        method: "POST",
-        body: formData,
-        retry: 1
-      });
+        // ... your existing request code ...
+        const res = await portfolioApi.request({
+            url: `${API_BASE}/portfolio`,
+            method: "POST",
+            body: formData,
+            retry: 1
+        });
 
-      if (res?.success) {
-        await fetchShopData();
-        return true;
-      }
-      return false;
+        console.log(res);
+
+        if (res?.success) {
+            await fetchShopData();
+            return true;
+        }
+        
+        // If the server returns success:false, we should probably log that too
+        throw new Error(`Server responded with failure: ${JSON.stringify(res)}`);
+
     } catch (err) {
-      alert(err)
-      alert(portfolioApi.error || "Upload failed");
-      return false;
+        // 1. Log to your Backend immediately
+        // We pass 'Add Portfolio' so you know which button they clicked
+        sendErrorToBackend(err, 'handleAddPortfolio Submit');
+
+        // 2. Show a user-friendly message (Keep the alert simple for them)
+        alert("Something went wrong. Our team has been notified.");
+        
+        // Optional: Keep your local log for development
+        console.error(err);
+        return false;
     }
-  };
+};
 
 
   // const handleAddPortfolio = async (formData) => {
@@ -721,15 +734,20 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
     };
   }, [previewUrl]);
 
- const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newItem.image || !newItem.title || !newItem.price) return alert("All fields required");
 
     setLoading(true);
 
     try {
+      const DEFAULT_ITEM = {
+        title: '', price: '', image: null, category: "Cake", unitType: "kg", unitValue: "250"
+      }
       // 1. Check if compression works
       const compressedImage = await compressImage(newItem.image);
+      console.log(compressImage);
+      console.log(newItem.image);
       if (!compressedImage) throw new Error("Image compression failed");
 
       const formData = new FormData();
@@ -740,9 +758,11 @@ const PortfolioManager = ({ isEditMode, items, onAdd, onDelete }) => {
       formData.append('unitValue', newItem.unitValue);
       formData.append('portfolioImages', compressedImage);
 
+
+      console.log(formData.getAll("portfolioImages"));
       // 2. Run the add function
       const success = await onAdd(formData);
-
+      console.log("isSuccess", success);
       if (success) {
         setIsAdding(false);
         setNewItem(DEFAULT_ITEM);
