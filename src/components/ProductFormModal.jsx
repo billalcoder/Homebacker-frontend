@@ -3,9 +3,9 @@ import Button from './Button'; // Reusing your existing button
 import FormInput from './FormInput'; // Reusing your input
 import Cropper from "react-easy-crop";
 import { getCroppedImage } from "../utils/cropImage";
-import ImageCropper from './ImageCropper';
+// import ImageCropper from './ImageCropper';
 import { compressImage } from '../utils/compressImage';
-
+import ImageCropper from "../components/ImageCroppers";
 const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
   const [formData, setFormData] = useState({
     productName: "",
