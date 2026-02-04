@@ -143,7 +143,7 @@ const Orders = () => {
   });
 
   return (
-    <div className="p-6 pb-24 min-h-screen bg-stone-50 animate-fade-in">
+    <div className="p-6 z-50 pb-24 min-h-screen bg-stone-50 animate-fade-in">
       {/* ... Header and Filter Tabs code remain same ... */}
 
       {/* ... Order List code remains same ... */}

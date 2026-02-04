@@ -15,7 +15,7 @@ const DashboardHeader = () => {
     const data = await res.json()
   }
   return (
-    <header className="px-6 py-5 flex justify-between items-center bg-white shadow-sm sticky top-0 z-20">
+    <header className="px-6 py-5 flex justify-between items-center bg-white shadow-sm sticky top-0 z-40">
       <div>
         <Link to="/dashboard" className="text-xl font-bold text-amber-700">Baker's Dashboard</Link>
         <p className="text-xs text-stone-500">Welcome back, Chef</p>
@@ -36,7 +36,7 @@ const DashboardHeader = () => {
 
         {/* Profile Dropdown */}
         {isProfileOpen && (
-          <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-xl border border-stone-100 py-2 z-50 z-auto animate-fade-in-down">
+          <div className="absolute z-50 right-0 mt-3 w-48 bg-white rounded-xl shadow-xl border border-stone-100 py-2 z-50 z-auto animate-fade-in-down">
             <div className="px-4 py-2 border-b border-stone-100 mb-1">
               <p className="text-sm font-bold text-stone-700">My Account</p>
             </div>

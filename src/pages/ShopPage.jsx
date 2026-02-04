@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, MapPin, Instagram, Globe, Phone, Plus, Trash2, Save, X, Loader2, Store, LayoutGrid, ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
-import ImageCropper from "../components/ImageCropper";
+// import ImageCropper from "../components/ImageCropper";
 import { getCroppedImage } from "../utils/cropImage";
 import FormInput from '../components/FormInput';
 import { logToServer } from '../utils/logs';
 import useApi from "../hooks/useApi";
 import { compressImage } from "../utils/compressImage";
-
+import ImageCropper from "../components/ImageCroppers";
 // ==========================================
 // PARENT COMPONENT: ShopProfile
 // ==========================================
@@ -166,15 +166,16 @@ const ShopProfile = () => {
 
   const handleCropDone = async (croppedPixels) => {
     const croppedFile = await getCroppedImage(cropImageSrc, croppedPixels);
-    const preview = URL.createObjectURL(croppedFile);
+    const compressedFile = await compressImage(croppedFile);
+    const preview = URL.createObjectURL(compressedFile);
 
     if (cropTarget === "profile") {
-      setSelectedProfileImg(croppedFile);
+      setSelectedProfileImg(compressedFile);
       setPreviewProfile(preview);
     }
 
     if (cropTarget === "cover") {
-      setSelectedCoverImg(croppedFile);
+      setSelectedCoverImg(compressedFile);
       setPreviewCover(preview);
     }
 
@@ -470,7 +471,7 @@ const ShopHeader = ({ isEditMode, toggleEdit, onSave, isSaving }) => {
   const shopApi = useApi();
   const portfolioApi = useApi();
   return (
-    <div className="bg-white/90 backdrop-blur-md border-b px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+    <div className="bg-white/90 backdrop-blur-md border-b px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0 z-40 shadow-sm">
 
       {/* Title */}
       <h1 className="text-base sm:text-lg font-bold text-gray-800 flex items-center gap-2">
