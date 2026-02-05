@@ -1,13 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import { X, Check, ZoomIn } from 'lucide-react'; // Assuming you use lucide-react like your other files
+import { X, Check, ZoomIn, Minus, Plus } from 'lucide-react'; 
 
-// Helper to center the crop initially
+// Helper: Start with 100% width crop
 function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
   return centerCrop(
     makeAspectCrop(
-      { unit: '%', width: 90 }, // Start with 90% width selection
+      { unit: '%', width: 100 },
       aspect,
       mediaWidth,
       mediaHeight,
@@ -19,9 +19,9 @@ function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
 
 const ImageCropper = ({ imageSrc, onDone, onCancel, aspect = 1 }) => {
   const [crop, setCrop] = useState();
-  const imgRef = useRef(null); // Reference to the displayed image
+  const [zoom, setZoom] = useState(1); 
+  const imgRef = useRef(null); 
 
-  // Triggered when the image loads on screen
   function onImageLoad(e) {
     const { width, height } = e.currentTarget;
     const initialCrop = centerAspectCrop(width, height, aspect);
@@ -29,38 +29,36 @@ const ImageCropper = ({ imageSrc, onDone, onCancel, aspect = 1 }) => {
   }
 
   const handleCropComplete = () => {
-    // 1. Safety checks
     if (!imgRef.current || !crop) {
       onCancel(); 
       return;
     }
-
     const image = imgRef.current;
     
-    // === THE FIX IS HERE (SCALE CALCULATION) ===
-    // We calculate how much the image was shrunk by CSS
+    // Scale Calculation
+    // Since we are changing the IMAGE dimensions directly with CSS (maxWidth/maxHeight),
+    // image.width will change, so this math automatically stays correct.
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
 
-    // We convert "Screen Pixels" -> "Real Image Pixels"
     const finalCrop = {
       x: crop.x * scaleX,
       y: crop.y * scaleY,
       width: crop.width * scaleX,
       height: crop.height * scaleY,
-      unit: 'px' // Important for your utils/cropImage.js
+      unit: 'px' 
     };
 
-    // Send the CORRECTED coordinates back to ShopPage
     onDone(finalCrop);
   };
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="relative bg-white rounded-xl overflow-hidden shadow-2xl max-w-4xl w-full flex flex-col max-h-[90vh]">
+      
+      <div className="relative bg-white rounded-xl overflow-hidden shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col">
         
         {/* Header */}
-        <div className="bg-white px-6 py-4 border-b flex justify-between items-center z-10">
+        <div className="bg-white px-6 py-4 border-b flex justify-between items-center z-10 shrink-0">
           <h3 className="font-bold text-gray-800 flex items-center gap-2">
             <ZoomIn size={20} className="text-blue-600"/> Adjust Image
           </h3>
@@ -69,42 +67,78 @@ const ImageCropper = ({ imageSrc, onDone, onCancel, aspect = 1 }) => {
           </button>
         </div>
 
-        {/* Cropper Area */}
-        <div className="flex-1 bg-gray-900 overflow-auto flex items-center justify-center p-4">
+        {/* Scrollable Cropper Area */}
+        <div className="flex-1 bg-gray-900 overflow-auto relative flex items-center justify-center p-4">
           <ReactCrop
             crop={crop}
             onChange={(_, percentCrop) => setCrop(percentCrop)}
             onComplete={(c) => setCrop(c)}
             aspect={aspect}
-            className="shadow-2xl"
+            style={{
+               // Ensure the crop container grows with the image
+               minWidth: 'fit-content',
+               minHeight: 'fit-content',
+            }}
           >
-            {/* max-h-[60vh] ensures the image fits on screen so you can see the handles.
-               w-auto maintains aspect ratio.
-            */}
             <img
               ref={imgRef}
               src={imageSrc}
               alt="Crop me"
               onLoad={onImageLoad}
-              className="max-h-[60vh] w-auto object-contain block mx-auto" 
+              style={{
+                // === THE FIX ===
+                // Instead of "scale()", we strictly control the dimensions.
+                // 1. Initial size (Zoom 1): Max Width 100%, Max Height 65vh (Fits screen)
+                // 2. Zoomed (Zoom 1.5): Max Width 150%, Max Height 97.5vh (Grows proportionally)
+                maxWidth: `${100 * zoom}%`,
+                maxHeight: `calc((85vh - 160px) * ${zoom})`, 
+                
+                // Ensure image maintains aspect ratio and doesn't distort
+                width: 'auto', 
+                height: 'auto',
+                display: 'block'
+              }}
             />
           </ReactCrop>
         </div>
 
-        {/* Footer Actions */}
-        <div className="bg-white border-t px-6 py-4 flex justify-end gap-3 z-10">
-          <button 
-            onClick={onCancel}
-            className="px-5 py-2.5 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-colors"
-          >
-            Cancel
-          </button>
-          <button 
-            onClick={handleCropComplete}
-            className="px-6 py-2.5 rounded-lg font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
-          >
-            <Check size={18} /> Apply Crop
-          </button>
+        {/* Footer */}
+        <div className="bg-white border-t px-6 py-3 z-10 shrink-0">
+          
+          <div className="flex items-center justify-center gap-4 mb-3">
+             <button onClick={() => setZoom(Math.max(1, zoom - 0.05))} className="p-1 text-gray-500 hover:bg-gray-100 rounded">
+                <Minus size={16} />
+             </button>
+             
+             <input 
+               type="range" 
+               min="1" 
+               max="1.5" 
+               step="0.01" 
+               value={zoom} 
+               onChange={(e) => setZoom(parseFloat(e.target.value))}
+               className="w-48 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+             />
+
+             <button onClick={() => setZoom(Math.min(1.5, zoom + 0.05))} className="p-1 text-gray-500 hover:bg-gray-100 rounded">
+                <Plus size={16} />
+             </button>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+            <button 
+              onClick={onCancel}
+              className="px-5 py-2.5 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleCropComplete}
+              className="px-6 py-2.5 rounded-lg font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+            >
+              <Check size={18} /> Apply Crop
+            </button>
+          </div>
         </div>
 
       </div>
